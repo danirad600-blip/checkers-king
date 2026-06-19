@@ -1,0 +1,2509 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"/>
+<title>Checkers King</title>
+<link rel="manifest" href="manifest.json"/>
+<meta name="theme-color" content="#ffd700"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<meta name="apple-mobile-web-app-title" content="Checkers King"/>
+<link rel="apple-touch-icon" href="icon-192.png"/>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;600;700&family=Exo+2:wght@400;700&family=Audiowide&display=swap');
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{font-family:'Rajdhani',sans-serif;background:linear-gradient(135deg,#0a0a1a 0%,#0d0d1f 50%,#0a0a14 100%);color:#e8e8ff;min-height:100vh;overflow-x:hidden}
+:root{--sq:52px;--pc:44px}
+@media(max-width:480px){:root{--sq:38px;--pc:32px}}
+@media(max-width:360px){:root{--sq:32px;--pc:26px}}
+@media(min-width:900px){:root{--sq:58px;--pc:48px}}
+
+/* ── PAGES ── */
+.pg{display:none;min-height:100vh;width:100%;flex-direction:column;align-items:center;justify-content:center;padding:24px 16px;gap:14px}
+.card{background:linear-gradient(160deg,#13132b,#0a0a1a);border:1px solid rgba(255,215,0,.3);border-radius:20px;padding:28px 24px;width:100%;max-width:380px;display:flex;flex-direction:column;align-items:center;gap:12px;text-align:center;box-shadow:0 0 40px rgba(100,100,255,.05),0 8px 32px rgba(0,0,0,.8)}
+.gold-title{font-family:'Orbitron',sans-serif;font-size:clamp(18px,5vw,26px);color:#ffd700;text-shadow:3px 3px 0 #000;letter-spacing:4px}
+.sub{font-size:13px;opacity:.6}
+.inp{width:100%;padding:11px 14px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:10px;color:#e8e8ff;font-family:'Rajdhani',sans-serif;font-size:15px;outline:none;transition:border-color .2s}
+.inp:focus{border-color:rgba(255,215,0,.6);background:rgba(255,255,255,.08);box-shadow:0 0 0 3px rgba(255,215,0,.06)}
+.inp::placeholder{opacity:.3}
+.err{font-size:12px;color:#ff6b6b;min-height:14px;width:100%;text-align:center}
+.divider{display:flex;align-items:center;gap:8px;width:100%;font-size:12px;opacity:.5}
+.divider::before,.divider::after{content:'';flex:1;height:1px;background:#5c4033}
+.btn{font-family:'Exo 2',sans-serif;cursor:pointer;border:none;border-radius:4px;touch-action:manipulation}
+.btn-gold{background:linear-gradient(135deg,#ffd700,#cc9900);color:#1a0a00;padding:12px 16px;font-size:clamp(11px,3vw,14px);font-weight:700;box-shadow:0 4px 15px rgba(255,215,0,.3),0 2px 0 #996600;width:100%;display:block;text-align:center;line-height:1.8;font-family:'Exo 2',sans-serif;border-radius:8px;letter-spacing:1px;transition:all .15s}
+.btn-gold:active{transform:translateY(2px);box-shadow:0 2px 8px rgba(255,215,0,.2),0 0px 0 #996600}
+.btn-ghost{background:rgba(255,215,0,.05);color:#ffd700;border:1.5px solid rgba(255,215,0,.5);padding:10px 14px;font-size:clamp(10px,2.5vw,13px);width:100%;display:block;text-align:center;line-height:1.8;font-family:'Exo 2',sans-serif;border-radius:8px;letter-spacing:1px;transition:all .15s;backdrop-filter:blur(4px)}
+.btn-ghost:active{background:rgba(255,215,0,.12);border-color:#ffd700}
+.btn-nav{background:rgba(255,255,255,.05);color:#c8c8e8;border:1px solid rgba(255,255,255,.12);padding:7px 10px;font-size:clamp(9px,2vw,12px);border-radius:8px;font-family:'Exo 2',sans-serif;transition:all .2s}
+.btn-nav:hover{border-color:rgba(255,215,0,.5);color:#ffd700;background:rgba(255,215,0,.05)}
+.btn-icon{background:none;color:#f0d9b5;font-size:clamp(10px,2.5vw,13px);border:none;cursor:pointer;padding:0;font-family:'Exo 2',sans-serif}
+.btn-circ{width:46px;height:46px;border-radius:12px;background:rgba(255,255,255,.07);color:#fff;display:flex;align-items:center;justify-content:center;border:1px solid rgba(255,255,255,.1);cursor:pointer;font-family:'Exo 2',sans-serif;font-size:20px;box-shadow:0 2px 8px rgba(0,0,0,.4);backdrop-filter:blur(4px);transition:all .15s}
+.btn-circ:active{transform:translateY(2px);background:rgba(255,255,255,.12);box-shadow:0 1px 4px rgba(0,0,0,.4)}
+.btn-circ.danger{background:rgba(231,76,60,.2);border-color:rgba(231,76,60,.5);color:#ff6b6b}
+.btn-circ.success{background:rgba(39,174,96,.2);border-color:rgba(39,174,96,.5);color:#00ff88}
+.btn-sm{background:#ffd700;color:#2c1f1f;padding:8px 16px;font-size:12px;font-weight:700;box-shadow:3px 3px 0 #000;border:none;border-radius:4px;font-family:'Exo 2',sans-serif;cursor:pointer}
+.btn-sm:active{transform:translate(2px,2px);box-shadow:1px 1px 0 #000}
+.btn-google{width:100%;padding:10px;background:#fff;color:#333;border:none;border-radius:6px;font-family:'Exo 2',sans-serif;font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px}
+.nav-row{display:flex;gap:6px;flex-wrap:wrap;justify-content:center}
+.mode-col{display:flex;flex-direction:column;gap:10px;width:100%;max-width:300px}
+.hint{font-size:12px;opacity:.4;text-align:center}
+.ai-options{display:flex;flex-direction:column;gap:8px;width:100%;max-width:300px}
+.level-row{display:flex;gap:6px;justify-content:center}
+.level-btn{background:#2c1f1f;color:#f0d9b5;border:2px solid #5c4033;padding:8px 12px;font-size:12px;font-family:'Exo 2',sans-serif;cursor:pointer;border-radius:4px;flex:1}
+.level-btn.sel{border-color:#ffd700;color:#ffd700;background:#3c2f2f}
+.toggle-row{display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:#2c1f1f;border:2px solid #5c4033;border-radius:6px;font-size:12px}
+.toggle{width:36px;height:20px;background:#5c4033;border-radius:10px;position:relative;cursor:pointer;border:none;flex-shrink:0}
+.toggle.on{background:#ffd700}
+.toggle::after{content:'';position:absolute;top:2px;left:2px;width:16px;height:16px;background:#fff;border-radius:50%;transition:transform .2s}
+.toggle.on::after{transform:translateX(16px)}
+
+/* ── PIECE COLOR PICKER ── */
+.color-row{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+.color-opt{width:36px;height:36px;border-radius:50%;cursor:pointer;border:3px solid transparent;box-shadow:0 2px 6px rgba(0,0,0,.5)}
+.color-opt.sel{border-color:#ffd700;transform:scale(1.15)}
+
+/* ── GAME APP ── */
+#app{width:calc(var(--sq)*8 + 48px);max-width:calc(100vw - 8px);border-radius:20px;overflow:hidden;position:relative;
+  background:linear-gradient(180deg,#0d0d20 0%,#080814 100%);
+  box-shadow:0 0 0 1px rgba(255,215,0,.15),0 8px 40px rgba(0,0,0,.9),0 0 60px rgba(80,80,255,.04)}
+.gh{background:linear-gradient(90deg,#0a0a1a,#12122e,#0a0a1a);padding:10px 14px;display:flex;align-items:center;justify-content:center;font-family:'Orbitron',sans-serif;font-size:clamp(12px,3vw,16px);letter-spacing:4px;color:#ffd700;text-shadow:0 0 20px rgba(255,215,0,.5),0 0 40px rgba(255,215,0,.2);position:relative;min-height:44px;border-bottom:1px solid rgba(255,215,0,.2)}
+.gt{display:flex;justify-content:space-between;align-items:center;padding:6px 14px;background:rgba(10,10,40,.6)}
+#game-timer{background:rgba(0,0,0,.4);padding:3px 10px;border-radius:20px;font-size:clamp(10px,2.5vw,13px);font-family:'Audiowide',sans-serif;color:#ffd700;border:1px solid rgba(255,215,0,.3)}
+.gi{display:flex;justify-content:space-between;align-items:center;padding:6px 14px;background:rgba(8,8,30,.7)}
+.clock{padding:6px 12px;border-radius:12px;font-size:clamp(11px,2.5vw,14px);font-family:'Audiowide',sans-serif;border:1px solid rgba(255,255,255,.1);min-width:56px;text-align:center;background:rgba(0,0,0,.3);transition:all .3s}
+.clock.on{border-color:rgba(255,215,0,.6);background:rgba(255,215,0,.1);color:#ffd700;box-shadow:0 0 12px rgba(255,215,0,.2)}
+.clock.danger{border-color:rgba(255,68,68,.7);background:rgba(255,0,0,.15);animation:pulse .5s infinite;color:#ff4444;box-shadow:0 0 12px rgba(255,0,0,.3)}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+
+/* ── WOODEN BOARD ── */
+#board-wrap{display:flex;justify-content:center;padding:14px;background:linear-gradient(180deg,#080814,#0d0d20);border-top:1px solid rgba(255,215,0,.15);border-bottom:1px solid rgba(255,215,0,.15)}
+#board-inner{border:3px solid rgba(255,215,0,.3);border-radius:8px;overflow:hidden;box-shadow:0 0 30px rgba(0,0,0,.8),0 0 15px rgba(255,215,0,.05),inset 0 0 20px rgba(0,0,0,.4)}
+#board{display:grid;grid-template-columns:repeat(8,var(--sq));grid-template-rows:repeat(8,var(--sq))}
+.sq{width:var(--sq);height:var(--sq);display:flex;align-items:center;justify-content:center;position:relative;cursor:pointer;touch-action:manipulation}
+.sq.light{background:#DEB887}
+.sq.dark{background:#8B4513}
+.sq.hi{background:#90EE90 !important;box-shadow:inset 0 0 0 3px #00cc44}
+.sq.hi.dark{background:#228B22 !important}
+.sq.opponent-from{box-shadow:inset 0 0 0 4px #ff6b6b}
+.sq.opponent-to{box-shadow:inset 0 0 0 4px #ff6b6b;animation:oppglow 1s infinite}
+@keyframes oppglow{0%,100%{box-shadow:inset 0 0 0 4px #ff6b6b}50%{box-shadow:inset 0 0 0 6px #ff6b6b}}
+
+/* ── 3D PIECES ── */
+.pc{width:var(--pc);height:var(--pc);border-radius:50%;position:relative;cursor:pointer}
+/* piece colors defined by data-color attribute */
+.pc[data-color="white"]{
+  background:radial-gradient(ellipse at 35% 30%,#ffffff,#d0d0d0 40%,#a0a0a0);
+  border:3px solid #888;
+  box-shadow:0 4px 8px rgba(0,0,0,.5),inset 0 -2px 4px rgba(0,0,0,.3),inset 0 2px 6px rgba(255,255,255,.8);
+}
+.pc[data-color="black"]{
+  background:radial-gradient(ellipse at 35% 30%,#555,#222 40%,#111);
+  border:3px solid #000;
+  box-shadow:0 4px 8px rgba(0,0,0,.6),inset 0 -2px 4px rgba(0,0,0,.5),inset 0 2px 4px rgba(255,255,255,.1);
+}
+.pc[data-color="red"]{
+  background:radial-gradient(ellipse at 35% 30%,#ff6b6b,#cc0000 40%,#880000);
+  border:3px solid #660000;
+  box-shadow:0 4px 8px rgba(0,0,0,.5),inset 0 -2px 4px rgba(0,0,0,.3),inset 0 2px 6px rgba(255,100,100,.5);
+}
+.pc[data-color="blue"]{
+  background:radial-gradient(ellipse at 35% 30%,#6bb3ff,#0055cc 40%,#003388);
+  border:3px solid #002266;
+  box-shadow:0 4px 8px rgba(0,0,0,.5),inset 0 -2px 4px rgba(0,0,0,.3),inset 0 2px 6px rgba(100,150,255,.5);
+}
+.pc[data-color="green"]{
+  background:radial-gradient(ellipse at 35% 30%,#77ee77,#009900 40%,#006600);
+  border:3px solid #004400;
+  box-shadow:0 4px 8px rgba(0,0,0,.5),inset 0 -2px 4px rgba(0,0,0,.3),inset 0 2px 6px rgba(100,255,100,.5);
+}
+.pc[data-color="orange"]{
+  background:radial-gradient(ellipse at 35% 30%,#ffaa44,#ff6600 40%,#cc4400);
+  border:3px solid #993300;
+  box-shadow:0 4px 8px rgba(0,0,0,.5),inset 0 -2px 4px rgba(0,0,0,.3),inset 0 2px 6px rgba(255,180,80,.5);
+}
+.pc[data-color="purple"]{
+  background:radial-gradient(ellipse at 35% 30%,#cc88ff,#7700cc 40%,#440088);
+  border:3px solid #330066;
+  box-shadow:0 4px 8px rgba(0,0,0,.5),inset 0 -2px 4px rgba(0,0,0,.3),inset 0 2px 6px rgba(180,100,255,.5);
+}
+.pc[data-color="gold"]{
+  background:radial-gradient(ellipse at 35% 30%,#ffe066,#ccaa00 40%,#886600);
+  border:3px solid #665000;
+  box-shadow:0 4px 8px rgba(0,0,0,.5),inset 0 -2px 4px rgba(0,0,0,.3),inset 0 2px 6px rgba(255,230,100,.5);
+}
+/* ring lines on piece for 3D wood effect */
+.pc::before{content:'';position:absolute;inset:15%;border-radius:50%;border:2px solid rgba(255,255,255,.2)}
+.pc::after{content:'';position:absolute;inset:30%;border-radius:50%;border:2px solid rgba(255,255,255,.15)}
+.pc.king-piece .king-label{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:'Orbitron',sans-serif;font-size:clamp(8px,1.8vw,12px);font-weight:900;color:#ffd700;text-shadow:0 1px 3px #000;z-index:2}
+.king-label{display:none}
+.king-piece .king-label{display:flex}
+
+/* ── BOTTOM BAR ── */
+.gb{display:flex;justify-content:space-around;align-items:center;padding:12px 14px;background:linear-gradient(180deg,#0a0a1a,#06060f);border-top:1px solid rgba(255,215,0,.15)}
+#pc-score{font-size:13px;color:#fff;font-family:'Rajdhani',sans-serif;font-weight:700;background:rgba(0,0,0,.4);padding:4px 12px;border-radius:20px}
+
+/* ── WIN OVERLAY ── */
+#win-ov{display:none;position:absolute;inset:0;background:rgba(0,0,0,.95);flex-direction:column;align-items:center;justify-content:center;gap:14px;z-index:10;border-radius:20px;backdrop-filter:blur(8px)}
+#win-ov.show{display:flex}
+#win-msg{font-size:clamp(18px,5vw,28px);color:#ffd700;text-shadow:0 0 30px rgba(255,215,0,.6),2px 2px 0 #000;text-align:center;padding:0 16px;font-family:'Orbitron',sans-serif;animation:winpulse 1.5s ease-in-out infinite}
+@keyframes winpulse{0%,100%{text-shadow:0 0 20px rgba(255,215,0,.4),2px 2px 0 #000}50%{text-shadow:0 0 40px rgba(255,215,0,.8),2px 2px 0 #000}}
+
+/* ── DRAW BANNER ── */
+#draw-banner{display:none;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:#1a0f0f;border:3px solid #ffd700;border-radius:14px;padding:20px;text-align:center;z-index:20;width:280px;flex-direction:column;gap:12px}
+#draw-banner.show{display:flex}
+#draw-banner h3{font-family:'Orbitron',sans-serif;color:#ffd700;font-size:14px}
+#draw-banner p{font-size:12px;opacity:.8}
+
+/* ── LEADERBOARD ── */
+.lb-wrap{width:100%;max-width:500px;display:flex;flex-direction:column;gap:12px;padding:0 8px}
+.back-row{display:flex;align-items:center;gap:10px;width:100%}
+.back-row h2{flex:1;text-align:center;font-size:clamp(11px,3vw,15px);color:#ffd700;font-family:'Orbitron',sans-serif}
+.lb-tabs{display:flex;gap:6px;justify-content:center}
+.lb-tab{background:#2c1f1f;color:#f0d9b5;border:2px solid #5c4033;padding:6px 10px;font-size:11px;font-family:'Exo 2',sans-serif;cursor:pointer;border-radius:4px}
+.lb-tab.active{border-color:#ffd700;color:#ffd700}
+.lb-tbl{border:2px solid #5c4033;border-radius:10px;overflow:hidden;width:100%}
+.lb-row{display:grid;grid-template-columns:42px 1fr 60px 60px;padding:8px 12px;font-size:12px;border-bottom:1px solid #5c4033;align-items:center}
+.lb-row:last-child{border-bottom:none}
+.lb-head{background:#3c2f2f;color:#ffd700;font-size:11px;font-family:'Orbitron',sans-serif}
+.lb-me{background:rgba(255,215,0,.08)}
+.lb-rank-1{color:#ffd700;font-weight:700}
+.lb-rank-2{color:#c0c0c0;font-weight:700}
+.lb-rank-3{color:#cd7f32;font-weight:700}
+
+/* ── RULES ── */
+.rules-wrap{width:100%;max-width:560px;display:flex;flex-direction:column;gap:8px;padding:0 8px}
+.rs{background:#2c1f1f;border:2px solid #5c4033;border-radius:8px;padding:10px 12px;display:flex;gap:10px;align-items:flex-start}
+.rn{width:24px;height:24px;border-radius:50%;background:#ffd700;color:#2c1f1f;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;font-family:'Orbitron',sans-serif}
+.rb h3{font-size:12px;color:#ffd700;margin-bottom:4px;font-family:'Orbitron',sans-serif}
+.rb p{font-size:13px;line-height:1.6;opacity:.85}
+.tag{display:inline-block;background:#5c4033;border-radius:3px;padding:2px 6px;font-size:10px;color:#ffd700;margin:2px 1px 0}
+
+/* ── MODALS ── */
+.ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,.93);z-index:200;align-items:center;justify-content:center;padding:16px;overflow-y:auto}
+.modal{background:linear-gradient(160deg,#13132b,#0a0a1a);border:1px solid rgba(255,215,0,.25);border-radius:20px;padding:18px 16px;width:440px;max-width:100%;text-align:center;max-height:90vh;overflow-y:auto;display:flex;flex-direction:column;gap:10px;box-shadow:0 0 60px rgba(0,0,0,.9),0 0 30px rgba(80,80,255,.05)}
+.modal h2{font-size:clamp(12px,3vw,15px);color:#ffd700;font-family:'Orbitron',sans-serif}
+.room-code{font-size:clamp(20px,6vw,28px);letter-spacing:8px;color:#ffd700;text-shadow:2px 2px 0 #000;margin:6px 0;font-family:'Audiowide',sans-serif}
+.tg{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.tc{cursor:pointer;border-radius:7px;overflow:hidden;border:3px solid transparent}
+.tc:hover,.tc.sel{border-color:#ffd700}
+.tp{display:grid;grid-template-columns:repeat(4,1fr);grid-template-rows:repeat(4,1fr);aspect-ratio:1}
+.tl{font-size:10px;padding:3px 2px;background:#2c1f1f;text-align:center}
+
+/* ── ONLINE PLAYERS ── */
+.player-list{display:flex;flex-direction:column;gap:6px;width:100%;max-height:250px;overflow-y:auto}
+.player-item{display:flex;justify-content:space-between;align-items:center;padding:10px 12px;background:#2c1f1f;border:1px solid #5c4033;border-radius:8px;font-size:13px;gap:8px}
+.player-item .dot{width:10px;height:10px;border-radius:50%;background:#00ff88;flex-shrink:0;box-shadow:0 0 6px #00ff88}
+.player-item .rank-badge{background:#5c4033;border-radius:4px;padding:2px 6px;font-size:10px;color:#ffd700;font-family:'Exo 2',sans-serif}
+.player-item .ch-btn{background:#ffd700;color:#2c1f1f;border:none;padding:6px 12px;font-size:11px;font-family:'Exo 2',sans-serif;font-weight:700;cursor:pointer;border-radius:6px;white-space:nowrap}
+.challenge-banner{background:#2c1f1f;border:2px solid #ffd700;border-radius:8px;padding:12px;font-size:13px;text-align:center;display:flex;flex-direction:column;gap:8px}
+/* ── PROFILE CARD ── */
+.profile-card{background:linear-gradient(135deg,#13132b,#0d0d20);border:1px solid rgba(255,215,0,.25);border-radius:16px;padding:14px 18px;width:100%;max-width:300px;display:flex;align-items:center;gap:14px;position:relative;box-shadow:0 4px 30px rgba(0,0,50,.5)}
+.profile-avatar{width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,#ffd700,#cc8800);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;border:3px solid #ffd700;box-shadow:0 0 12px rgba(255,215,0,.3)}
+.profile-info{flex:1;min-width:0;text-align:left}
+.profile-nickname{font-family:'Orbitron',sans-serif;font-size:14px;color:#ffd700;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.profile-tag{font-size:11px;color:#888;margin-top:2px}
+.profile-edit-btn{background:#5c4033;border:1px solid #ffd700;color:#ffd700;border-radius:6px;padding:4px 10px;font-size:11px;cursor:pointer;white-space:nowrap;font-family:'Exo 2',sans-serif}
+.profile-edit-btn:hover{background:#ffd700;color:#2c1f1f}
+/* nickname overlay */
+.nick-ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,.95);z-index:300;align-items:center;justify-content:center;padding:20px}
+.nick-ov.show{display:flex}
+.nick-modal{background:#1a0f0f;border:3px solid #ffd700;border-radius:16px;padding:28px 24px;width:100%;max-width:360px;display:flex;flex-direction:column;gap:14px;text-align:center}
+.nick-modal h2{font-family:'Orbitron',sans-serif;font-size:16px;color:#ffd700}
+.nick-modal p{font-size:12px;opacity:.6;line-height:1.6}
+.nick-preview{font-family:'Orbitron',sans-serif;font-size:18px;color:#ffd700;padding:12px;background:#2c1f1f;border-radius:8px;border:2px solid #5c4033;min-height:48px;word-break:break-all}
+.nick-chars{font-size:11px;opacity:.4;text-align:right}
+
+/* ── PRIZE LEADERBOARD ── */
+.prize-wrap{width:100%;max-width:500px;display:flex;flex-direction:column;gap:12px;padding:0 8px}
+.prize-banner{background:linear-gradient(135deg,#2c1f1f,#3c2f00);border:2px solid #ffd700;border-radius:12px;padding:14px 16px;text-align:center;display:flex;flex-direction:column;gap:6px}
+.prize-banner h3{font-family:'Orbitron',sans-serif;font-size:13px;color:#ffd700}
+.prize-banner p{font-size:11px;opacity:.7;line-height:1.6}
+.prize-row{display:grid;grid-template-columns:36px 1fr 60px 60px 70px;padding:8px 12px;font-size:12px;border-bottom:1px solid #5c4033;align-items:center;gap:4px}
+.prize-row:last-child{border-bottom:none}
+.prize-head{background:#3c2f2f;color:#ffd700;font-size:10px;font-family:'Orbitron',sans-serif}
+.prize-zone-1{background:rgba(255,215,0,.08)}
+.prize-zone-2{background:rgba(100,200,100,.05)}
+.prize-zone-3{background:rgba(100,150,255,.05)}
+.prize-badge{font-size:10px;padding:2px 6px;border-radius:4px;font-weight:700;white-space:nowrap}
+.reg-modal{background:#1a0f0f;border:3px solid #ffd700;border-radius:16px;padding:24px 20px;width:100%;max-width:380px;display:flex;flex-direction:column;gap:14px;text-align:center}
+.reg-modal h2{font-family:'Orbitron',sans-serif;font-size:15px;color:#ffd700}
+.reg-modal p{font-size:12px;opacity:.7;line-height:1.7}
+.reg-steps{display:flex;flex-direction:column;gap:8px;text-align:left}
+.reg-step{background:#2c1f1f;border:1px solid #5c4033;border-radius:8px;padding:10px 12px;font-size:12px;display:flex;gap:10px;align-items:flex-start}
+.reg-step-num{width:22px;height:22px;border-radius:50%;background:#ffd700;color:#2c1f1f;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0;font-family:'Orbitron',sans-serif}
+.reg-status{padding:8px 12px;border-radius:8px;font-size:12px;text-align:center;font-weight:700}
+.reg-status.active{background:rgba(0,255,136,.1);border:1px solid #00ff88;color:#00ff88}
+.reg-status.inactive{background:rgba(255,100,100,.1);border:1px solid #ff6b6b;color:#ff6b6b}
+
+/* ── SIDE PANEL ── */
+#side-panel{display:none}
+@media(min-width:900px){
+  #pg-game{flex-direction:row !important;align-items:flex-start !important;justify-content:center !important;gap:24px !important;padding-top:40px !important}
+  #side-panel{display:flex;flex-direction:column;gap:10px;width:190px;padding-top:8px}
+  .sp-title{font-family:'Orbitron',sans-serif;font-size:10px;color:#ffd700;opacity:.7;margin-bottom:2px}
+  .sp-box{background:#2c1f1f;border:2px solid #5c4033;border-radius:8px;padding:10px 12px;font-size:12px;display:flex;flex-direction:column;gap:6px}
+}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="pg-login" class="pg">
+  <div class="card">
+    <svg width="100%" viewBox="0 0 680 340" xmlns="http://www.w3.org/2000/svg" style="margin-bottom:4px">
+      <rect x="40" y="20" width="600" height="300" rx="20" fill="#1a0f0f"/>
+      <rect x="40" y="20" width="600" height="300" rx="20" fill="none" stroke="#ffd700" stroke-width="2.5"/>
+      <g transform="translate(70,55)">
+        <rect x="0" y="0" width="28" height="28" rx="3" fill="#2c1f1f"/><rect x="30" y="0" width="28" height="28" rx="3" fill="#5c4033"/>
+        <rect x="60" y="0" width="28" height="28" rx="3" fill="#2c1f1f"/><rect x="90" y="0" width="28" height="28" rx="3" fill="#5c4033"/>
+        <rect x="0" y="30" width="28" height="28" rx="3" fill="#5c4033"/><rect x="30" y="30" width="28" height="28" rx="3" fill="#2c1f1f"/>
+        <rect x="60" y="30" width="28" height="28" rx="3" fill="#5c4033"/><rect x="90" y="30" width="28" height="28" rx="3" fill="#2c1f1f"/>
+        <rect x="0" y="60" width="28" height="28" rx="3" fill="#2c1f1f"/><rect x="30" y="60" width="28" height="28" rx="3" fill="#5c4033"/>
+        <rect x="60" y="60" width="28" height="28" rx="3" fill="#2c1f1f"/><rect x="90" y="60" width="28" height="28" rx="3" fill="#5c4033"/>
+        <rect x="0" y="90" width="28" height="28" rx="3" fill="#5c4033"/><rect x="30" y="90" width="28" height="28" rx="3" fill="#2c1f1f"/>
+        <rect x="60" y="90" width="28" height="28" rx="3" fill="#5c4033"/><rect x="90" y="90" width="28" height="28" rx="3" fill="#2c1f1f"/>
+        <circle cx="15" cy="15" r="11" fill="#c4a36a" stroke="#8b5a2b" stroke-width="2"/>
+        <circle cx="75" cy="75" r="11" fill="#c4a36a" stroke="#8b5a2b" stroke-width="2"/>
+        <circle cx="45" cy="45" r="11" fill="#333" stroke="#111" stroke-width="2"/>
+        <circle cx="105" cy="105" r="11" fill="#333" stroke="#111" stroke-width="2"/>
+        <circle cx="75" cy="15" r="13" fill="#ffd700" stroke="#b8860b" stroke-width="2.5"/>
+        <text x="75" y="20" text-anchor="middle" font-size="12" font-weight="700" fill="#2c1f1f" font-family="Georgia,serif">K</text>
+      </g>
+      <g transform="translate(340,60)">
+        <rect x="-60" y="40" width="120" height="18" rx="4" fill="#ffd700"/>
+        <polygon points="-60,40 -60,5 -38,22 0,-8 38,22 60,5 60,40" fill="#ffd700"/>
+        <polygon points="-60,40 -60,5 -38,22 0,-8 38,22 60,5 60,40" fill="none" stroke="#b8860b" stroke-width="1.5" stroke-linejoin="round"/>
+        <circle cx="-60" cy="5" r="5" fill="#ff4444"/><circle cx="0" cy="-8" r="6" fill="#ff4444"/><circle cx="60" cy="5" r="5" fill="#ff4444"/>
+        <circle cx="-40" cy="49" r="4" fill="#b8860b"/><circle cx="0" cy="49" r="4" fill="#b8860b"/><circle cx="40" cy="49" r="4" fill="#b8860b"/>
+      </g>
+      <text x="340" y="178" text-anchor="middle" font-size="48" font-weight="900" fill="#ffd700" font-family="Georgia,serif" letter-spacing="6">CHECKERS</text>
+      <text x="340" y="218" text-anchor="middle" font-size="22" font-weight="700" fill="#f0d9b5" font-family="Georgia,serif" letter-spacing="14">K I N G</text>
+      <line x1="200" y1="232" x2="480" y2="232" stroke="#ffd700" stroke-width="1.5" opacity="0.5"/>
+      <circle cx="178" cy="218" r="10" fill="#c4a36a" stroke="#8b5a2b" stroke-width="1.5"/>
+      <circle cx="502" cy="218" r="10" fill="#333" stroke="#111" stroke-width="1.5"/>
+      <text x="340" y="272" text-anchor="middle" font-size="13" fill="#f0d9b5" font-family="Georgia,serif" opacity="0.6" letter-spacing="3">THE ULTIMATE CHECKERS EXPERIENCE</text>
+    </svg>
+    <div class="sub">Sign in or play as guest</div>
+    <button type="button" class="btn btn-google" onclick="googleSignIn()">
+      <svg width="16" height="16" viewBox="0 0 48 48">
+        <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+        <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+        <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+        <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.35-8.16 2.35-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+      </svg>
+      Sign in with Google
+    </button>
+    <div class="divider">or sign in with email</div>
+    <input class="inp" type="email" id="email-inp" placeholder="Email address"/>
+    <input class="inp" type="password" id="pass-inp" placeholder="Password"/>
+    <button type="button" class="btn btn-gold" onclick="emailLogin()">SIGN IN</button>
+    <button type="button" class="btn btn-ghost" onclick="emailRegister()">CREATE ACCOUNT</button>
+    <div class="divider">or continue as guest</div>
+    <input class="inp" type="text" id="uname" placeholder="Your name (optional)" maxlength="18"/>
+    <div class="err" id="login-err"></div>
+    <button type="button" class="btn btn-gold" onclick="guestLogin()">PLAY AS GUEST</button>
+    <p style="font-size:10px;opacity:.3;margin-top:2px">Google login saves scores globally</p>
+  </div>
+</div>
+
+<!-- HOME -->
+<div id="pg-home" class="pg" style="background:linear-gradient(160deg,#1a0f0f,#3c2f2f)">
+  <svg width="100%" viewBox="0 0 680 200" xmlns="http://www.w3.org/2000/svg" style="max-width:480px">
+    <text x="340" y="80" text-anchor="middle" font-size="52" font-weight="900" fill="#ffd700" font-family="Georgia,serif" letter-spacing="6">CHECKERS</text>
+    <text x="340" y="120" text-anchor="middle" font-size="24" font-weight="700" fill="#f0d9b5" font-family="Georgia,serif" letter-spacing="14">K I N G</text>
+    <line x1="160" y1="138" x2="520" y2="138" stroke="#ffd700" stroke-width="1.5" opacity="0.5"/>
+    <text x="340" y="170" text-anchor="middle" font-size="14" fill="#f0d9b5" font-family="Georgia,serif" opacity="0.5" letter-spacing="3">THE ULTIMATE CHECKERS EXPERIENCE</text>
+  </svg>
+  <!-- Profile Card -->
+  <div class="profile-card">
+    <div class="profile-avatar" id="home-avatar">👑</div>
+    <div class="profile-info">
+      <div class="profile-nickname" id="home-nickname">Loading...</div>
+      <div class="profile-tag" id="home-tag">Tap edit to set your nickname</div>
+    </div>
+    <button type="button" class="profile-edit-btn" onclick="openNickModal()">✏️ Edit</button>
+  </div>
+  <div id="welcome" style="font-size:12px;opacity:.5;text-align:center"></div>
+  <div class="nav-row">
+    <button type="button" class="btn btn-nav" onclick="showPg('pg-lb')">📊 MY STATS</button>
+    <button type="button" class="btn btn-nav" onclick="showPg('pg-prize')" style="border-color:#ffd700;color:#ffd700">💰 PRIZES</button>
+    <button type="button" class="btn btn-nav" onclick="showPg('pg-tourney')" style="border-color:#a64dff;color:#a64dff">🤖 TOURNAMENT</button>
+    <button type="button" class="btn btn-nav" onclick="showPg('pg-rules')">📖 RULES</button>
+    <button type="button" class="btn btn-nav" onclick="openOv('ov-themes')">🎨 THEMES</button>
+    <button type="button" class="btn btn-nav" onclick="doLogout()">🚪 LOGOUT</button>
+  </div>
+  <div class="mode-col">
+ <button type="button" class="btn btn-ghost" onclick="openOv('ov-online')">👥 PLAY VS FRIEND<br><small style="font-size:11px">Room code - Play remotely with anyone</small></button>
+    <button type="button" class="btn btn-gold" onclick="showPg('pg-ai-setup')">🤖 PLAY VS COMPUTER<br><small style="font-size:11px">Choose level and who starts</small></button>
+    <button type="button" class="btn btn-ghost" onclick="openOv('ov-online')">🌐 PLAY ONLINE<br><small style="font-size:11px">Real-time - Challenge players worldwide</small></button>
+  </div>
+  <div class="hint">R = restart &nbsp; U = undo</div>
+  <a href="https://t.me/+J_bsAhFHdCk5MDZk" target="_blank" rel="noopener" style="display:flex;align-items:center;gap:8px;background:#2c1f1f;border:2px solid #229ED9;border-radius:10px;padding:10px 18px;text-decoration:none;color:#f0d9b5;font-family:'Exo 2',sans-serif;font-size:13px;font-weight:700;max-width:300px;justify-content:center">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="#229ED9"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.894 8.221-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.447 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.12L7.43 13.617l-2.962-.924c-.643-.204-.657-.643.136-.953l11.57-4.461c.537-.194 1.006.131.72.942z"/></svg>
+    💬 JOIN OUR TELEGRAM COMMUNITY
+  </a>
+</div>
+
+<!-- AI SETUP -->
+<div id="pg-ai-setup" class="pg" style="background:linear-gradient(160deg,#1a0f0f,#3c2f2f)">
+  <div class="gold-title" style="font-size:clamp(16px,5vw,22px)">VS COMPUTER</div>
+  <div class="ai-options">
+    <p style="font-size:13px;color:#ffd700;text-align:center">Choose Difficulty</p>
+    <div class="level-row">
+      <button type="button" class="level-btn sel" id="lvl-easy" onclick="setLevel('easy')">EASY</button>
+      <button type="button" class="level-btn" id="lvl-medium" onclick="setLevel('medium')">MEDIUM</button>
+      <button type="button" class="level-btn" id="lvl-hard" onclick="setLevel('hard')">HARD</button>
+    </div>
+    <div id="level-desc" style="font-size:12px;opacity:.7;text-align:center;padding:6px 8px;background:#1a0f0f;border-radius:6px;border:1px solid #5c4033;line-height:1.8">Easy - AI picks random moves often. Good for beginners.</div>
+    <div class="toggle-row">
+      <span style="font-size:12px">Computer goes first (plays Black)</span>
+      <button type="button" class="toggle" id="ai-first-toggle" onclick="toggleAiFirst()"></button>
+    </div>
+    <div id="ai-first-hint" style="font-size:11px;opacity:.5;text-align:center">You play White — computer plays Black and moves first</div>
+    <p style="font-size:13px;color:#ffd700;text-align:center;margin-top:8px">Your piece color</p>
+    <div class="color-row" id="color-picker-1"></div>
+    <p style="font-size:13px;color:#ffd700;text-align:center">Computer piece color</p>
+    <div class="color-row" id="color-picker-2"></div>
+    <button type="button" class="btn btn-gold" onclick="startAiGame()" style="margin-top:4px">START GAME</button>
+    <button type="button" class="btn btn-ghost" onclick="showPg('pg-home')">BACK</button>
+  </div>
+</div>
+
+<!-- GAME -->
+<div id="pg-game" class="pg" style="background:#1a0f0f;padding:8px">
+  <div id="app">
+    <div class="gh">
+      <button type="button" class="btn btn-icon" style="position:absolute;left:8px" onclick="goHome()">🏠</button>
+      CHECKERS KING
+      <button type="button" class="btn btn-icon" style="position:absolute;right:8px" onclick="openOv('ov-themes')">🎨</button>
+    </div>
+    <div class="gt">
+      <span id="p1-label" style="font-size:12px;color:#f0d9b5">WHITE</span>
+      <div id="game-timer">00:00</div>
+      <span id="p2-label" style="font-size:12px;color:#f0d9b5">BLACK</span>
+    </div>
+    <div class="gi">
+      <div style="display:flex;flex-direction:column;align-items:center;gap:2px">
+        <div id="clock-w" class="clock on">0:30</div>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:2px;text-align:center">
+        <span id="turn-lbl" style="font-size:clamp(11px,3vw,14px);font-weight:700">Player 1</span>
+        <span style="color:#ffd700;font-size:10px;font-family:Orbitron,sans-serif">TURN</span>
+        <span id="turn-ico" style="font-size:11px;opacity:.7">⬜</span>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:2px">
+        <div id="clock-b" class="clock">0:30</div>
+      </div>
+    </div>
+    <div id="board-wrap">
+      <div id="board-inner">
+        <div id="board"></div>
+      </div>
+    </div>
+    <div id="pc-score" style="text-align:center;padding:4px;background:rgba(0,0,0,.3);font-size:13px">White: 12 &nbsp;|&nbsp; Black: 12</div>
+    <div class="gb" id="game-bar-pvp">
+      <button type="button" class="btn-circ" id="undo-btn" onclick="undoMove()" title="Undo">↩</button>
+      <button type="button" class="btn-circ" onclick="newGame()" title="New Game">🔄</button>
+      <button type="button" class="btn-circ success" onclick="offerDraw()" title="Offer Draw">🤝</button>
+      <button type="button" class="btn-circ" onclick="showPg('pg-lb')" title="Leaderboard">🏆</button>
+      <button type="button" class="btn-circ" onclick="showPg('pg-rules')" title="Rules">❓</button>
+    </div>
+    <div class="gb" id="game-bar-online" style="display:none">
+      <button type="button" class="btn-circ success" onclick="offerDraw()" title="Offer Draw">🤝</button>
+      <button type="button" class="btn-circ danger" onclick="forfeitOnlineGame()" title="Forfeit">🏳️</button>
+    </div>
+    <!-- Online emoji info bar -->
+    <div id="online-bar" style="display:none;flex-direction:column;background:rgba(0,0,0,.5);border-top:1px solid rgba(255,215,0,.2)">
+      <!-- nickname display row -->
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:6px 14px;border-bottom:1px solid rgba(255,215,0,.1)">
+        <div style="display:flex;align-items:center;gap:8px">
+          <span id="online-avatar-disp" style="font-size:20px">👑</span>
+          <div>
+            <div id="online-nick-disp" style="font-family:Orbitron,sans-serif;font-size:11px;color:#ffd700;font-weight:700"></div>
+            <div id="online-role-disp" style="font-size:9px;color:#aaa"></div>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px">
+          <div style="text-align:center">
+            <div style="font-size:16px">⏱️</div>
+            <div style="font-size:9px;color:#aaa">20s</div>
+          </div>
+          <div style="text-align:center">
+            <div style="font-size:16px">✅</div>
+            <div style="font-size:9px;color:#00ff88">LIVE</div>
+          </div>
+          <div id="role-emoji" style="font-size:20px">⬜</div>
+        </div>
+      </div>
+    </div>
+    <span id="role-label" style="display:none"></span>
+    <!-- Draw offer banner -->
+    <div id="draw-banner">
+      <h3>🤝 DRAW OFFERED</h3>
+      <p id="draw-text">Opponent is offering a draw. Accept?</p>
+      <div style="display:flex;gap:8px;justify-content:center">
+        <button type="button" class="btn btn-gold" style="flex:1" onclick="acceptDraw()">ACCEPT</button>
+        <button type="button" class="btn btn-ghost" style="flex:1" onclick="declineDraw()">DECLINE</button>
+      </div>
+    </div>
+    <div id="win-ov">
+      <div id="win-msg"></div>
+      <!-- Normal buttons for PvP and AI -->
+      <div id="win-btns-normal" style="display:flex;flex-direction:column;gap:8px;width:220px">
+        <button type="button" class="btn btn-gold" onclick="dismissWin()">PLAY AGAIN</button>
+        <button type="button" class="btn btn-ghost" onclick="goHome()">HOME</button>
+      </div>
+      <!-- Online rematch section -->
+      <div id="win-btns-online" style="display:none;flex-direction:column;align-items:center;gap:10px;width:260px">
+        <div id="rematch-countdown" style="font-size:36px;color:#ffd700;font-family:Audiowide,sans-serif;text-shadow:0 0 20px rgba(255,215,0,.5)"></div>
+        <div id="rematch-status" style="font-size:13px;color:#aaa;text-align:center;line-height:1.6"></div>
+        <div id="rematch-ask" style="display:flex;flex-direction:column;gap:8px;width:100%">
+          <button type="button" class="btn btn-gold" onclick="sendRematch()">🔄 REMATCH</button>
+          <button type="button" class="btn btn-ghost" onclick="declineRematch()">🚪 LEAVE GAME</button>
+        </div>
+        <div id="rematch-waiting" style="display:none;font-size:13px;color:#ffd700;text-align:center">
+          ⏳ Rematch request sent...<br><span style="font-size:11px;color:#aaa">Waiting for opponent response</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div id="side-panel">
+    <div class="sp-title">GAME INFO</div>
+    <div class="sp-box">
+      <div>Mode: <span id="sp-mode" style="color:#ffd700">PvP</span></div>
+      <div>Turn: <span id="sp-turn" style="color:#ffd700">White</span></div>
+      <div>Pieces: <span id="sp-pcs" style="color:#ffd700">W12 B12</span></div>
+    </div>
+    <div class="sp-title" style="margin-top:4px">CONTROLS</div>
+    <button type="button" class="btn btn-gold" onclick="newGame()" style="font-size:11px;padding:10px">🔄 NEW GAME</button>
+    <button type="button" class="btn btn-ghost" onclick="undoMove()" style="font-size:11px;padding:8px">↩ UNDO MOVE</button>
+    <button type="button" class="btn btn-ghost" onclick="offerDraw()" style="font-size:11px;padding:8px">🤝 OFFER DRAW</button>
+    <button type="button" class="btn btn-ghost" onclick="openOv('ov-themes')" style="font-size:11px;padding:8px">🎨 THEMES</button>
+    <button type="button" class="btn btn-ghost" onclick="showPg('pg-lb')" style="font-size:11px;padding:8px">🏆 LEADERBOARD</button>
+    <button type="button" class="btn btn-ghost" onclick="goHome()" style="font-size:11px;padding:8px">🏠 HOME</button>
+  </div>
+</div>
+
+<!-- MY STATS PAGE -->
+<div id="pg-lb" class="pg" style="justify-content:flex-start;padding-top:20px;background:linear-gradient(160deg,#08081a,#0d0d1f)">
+  <div class="lb-wrap">
+    <div class="back-row">
+      <button type="button" class="btn btn-nav" onclick="showPg('pg-home')">BACK</button>
+      <h2>📊 MY STATS</h2>
+      <div style="width:52px"></div>
+    </div>
+    <!-- Personal rank card -->
+    <div style="background:linear-gradient(135deg,#2c1f1f,#3c2f00);border:2px solid #ffd700;border-radius:14px;padding:18px 16px;text-align:center;display:flex;flex-direction:column;gap:10px">
+      <div style="font-family:'Orbitron',sans-serif;font-size:11px;color:#ffd700;opacity:.7">YOUR DAILY RANK</div>
+      <div id="my-rank-display" style="font-family:'Audiowide',sans-serif;font-size:48px;color:#ffd700;text-shadow:3px 3px 0 #000;line-height:1">#—</div>
+      <div id="my-rank-name" style="font-family:'Orbitron',sans-serif;font-size:13px;color:#f0d9b5"></div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:4px">
+        <div style="background:rgba(0,0,0,.3);border-radius:8px;padding:10px">
+          <div id="my-stat-wins" style="font-family:'Audiowide',sans-serif;font-size:20px;color:#ffd700">0</div>
+          <div style="font-size:10px;opacity:.6">Wins Today</div>
+        </div>
+        <div style="background:rgba(0,0,0,.3);border-radius:8px;padding:10px">
+          <div id="my-stat-total" style="font-family:'Audiowide',sans-serif;font-size:20px;color:#ffd700">0</div>
+          <div style="font-size:10px;opacity:.6">Players Today</div>
+        </div>
+        <div style="background:rgba(0,0,0,.3);border-radius:8px;padding:10px">
+          <div id="my-stat-above" style="font-family:'Audiowide',sans-serif;font-size:20px;color:#00ff88">0</div>
+          <div style="font-size:10px;opacity:.6">Above You</div>
+        </div>
+      </div>
+    </div>
+    <!-- Nearby players (the 2 above and 2 below you on the leaderboard) -->
+    <div style="font-family:'Orbitron',sans-serif;font-size:10px;color:#ffd700;opacity:.6;text-align:center;margin-top:4px">NEARBY RANKINGS</div>
+    <div class="lb-tbl">
+      <div class="lb-row lb-head"><span>Rank</span><span>Player</span><span style="text-align:right">Wins</span><span style="text-align:right"></span></div>
+      <div id="lb-body"></div>
+    </div>
+    <p style="font-size:11px;opacity:.35;text-align:center">Resets every day at 10:00 PM · Online wins only</p>
+  </div>
+</div>
+
+<!-- RULES -->
+<div id="pg-rules" class="pg" style="justify-content:flex-start;padding-top:20px;background:linear-gradient(160deg,#08081a,#0d0d1f)">
+  <div class="rules-wrap">
+    <div class="back-row">
+      <button type="button" class="btn btn-nav" onclick="showPg('pg-home')">BACK</button>
+      <h2>RULES AND GUIDE</h2>
+      <div style="width:52px"></div>
+    </div>
+    <div class="rs"><div class="rn">1</div><div class="rb"><h3>The Board</h3><p>8x8 board, dark squares only. Each player starts with 12 pieces. White at bottom, Black at top.</p><span class="tag">8x8</span><span class="tag">12 pieces each</span></div></div>
+    <div class="rs"><div class="rn">2</div><div class="rb"><h3>Moving</h3><p>Tap a piece — green squares show where you can go. Regular pieces move forward diagonally one square.</p><span class="tag">tap to select</span><span class="tag">forward only</span></div></div>
+    <div class="rs"><div class="rn">3</div><div class="rb"><h3>Capturing — Mandatory</h3><p>Jump over an adjacent enemy to an empty square — that piece is removed. If a capture exists you MUST take it.</p><span class="tag">must capture</span></div></div>
+    <div class="rs"><div class="rn">4</div><div class="rb"><h3>Chain Captures</h3><p>After capturing, if another jump is available you MUST keep jumping in the same turn.</p><span class="tag">keep jumping</span></div></div>
+    <div class="rs"><div class="rn">5</div><div class="rb"><h3>King</h3><p>Reach the far end to become King (K). Kings move any distance diagonally in any direction.</p><span class="tag">any direction</span><span class="tag">long capture</span></div></div>
+    <div class="rs"><div class="rn">6</div><div class="rb"><h3>Draw</h3><p>Either player can offer a draw using the 🤝 button. The opponent can accept or decline. In online mode a draw offer is sent to your opponent.</p><span class="tag">mutual agreement</span></div></div>
+    <div class="rs"><div class="rn">7</div><div class="rb"><h3>30-Second Clock</h3><p>In PvP and Online modes each player has 30 seconds per turn. Red flash = under 10 seconds.</p><span class="tag">30s per turn</span><span class="tag">auto-loss</span></div></div>
+    <div class="rs"><div class="rn">8</div><div class="rb"><h3>Winning</h3><p>Capture all opponent pieces, leave them with no moves, let their clock run out, or opponent resigns.</p><span class="tag">capture all</span><span class="tag">stalemate</span><span class="tag">timeout</span></div></div>
+    <button type="button" class="btn btn-gold" style="max-width:220px;margin:0 auto" onclick="showPg('pg-home')">GOT IT - PLAY!</button>
+  </div>
+</div>
+<!-- COMPUTER TOURNAMENT PAGE -->
+<div id="pg-tourney" class="pg" style="justify-content:flex-start;padding-top:20px;background:linear-gradient(160deg,#08081a,#0d0020)">
+  <div class="prize-wrap">
+    <div class="back-row">
+      <button type="button" class="btn btn-nav" onclick="showPg('pg-home')">BACK</button>
+      <h2 style="flex:1;text-align:center;font-size:clamp(11px,3vw,14px);color:#ffd700;font-family:'Orbitron',sans-serif">🤖 COMPUTER TOURNAMENT</h2>
+      <div style="width:52px"></div>
+    </div>
+    <div class="prize-banner">
+      <h3>🏆 BEST OF 3 VS COMPUTER</h3>
+      <p>Entry: <strong style="color:#ffd700">3,000 UGX</strong> · Play 3 games vs the computer.<br>Win=3pts, Draw=1pt, Loss=0pts. Top 3 when the window closes win prizes:<br>🥇 1st: <strong style="color:#ffd700">8,000 UGX</strong> · 🥈 2nd: <strong style="color:#ffd700">7,000 UGX</strong> · 🥉 3rd: <strong style="color:#ffd700">5,000 UGX</strong><br>If players tie for a rank, that rank's prize is split evenly between them.</p>
+      <div id="tourney-window-status" style="font-size:13px;color:#ffd700;font-family:'Audiowide',sans-serif;text-align:center;margin-top:4px"></div>
+      <div style="font-size:11px;opacity:.6;text-align:center">Resets every 2 hours · Open 10:00 AM – 10:00 PM</div>
+    </div>
+
+    <!-- Not entered yet -->
+    <div id="tourney-not-entered" style="display:flex;flex-direction:column;gap:10px">
+      <div class="reg-step">
+        <div class="reg-step-num">1</div>
+        <div>Send <strong style="color:#ffd700">3,000 UGX</strong> via Airtel Money to:<br><strong style="color:#ffd700;font-size:15px;letter-spacing:2px" id="tourney-phone-display">0701 091 871</strong></div>
+      </div>
+      <div class="reg-step">
+        <div class="reg-step-num">2</div>
+        <div>Get your <strong style="color:#ffd700">6-digit tournament code</strong> from the admin on Telegram.</div>
+      </div>
+      <input class="inp" type="text" id="tourney-code-inp" maxlength="6" placeholder="Enter 6-digit code" style="text-align:center;font-size:18px;letter-spacing:4px;font-family:'Audiowide',sans-serif;text-transform:uppercase"/>
+      <div class="err" id="tourney-err"></div>
+      <button type="button" class="btn btn-gold" onclick="submitTourneyCode()">✅ ENTER TOURNAMENT</button>
+      <a href="https://t.me/+J_bsAhFHdCk5MDZk" target="_blank" rel="noopener" style="display:flex;align-items:center;gap:6px;background:#1a3a5c;border:1px solid #229ED9;border-radius:8px;padding:8px 12px;text-decoration:none;color:#f0d9b5;font-size:11px;justify-content:center">
+        💬 Get your code on Telegram
+      </a>
+    </div>
+
+    <!-- Entered, mid-tournament -->
+    <div id="tourney-entered" style="display:none;flex-direction:column;gap:10px">
+      <div class="stat-row" style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
+        <div style="background:#2c1f1f;border:1px solid #5c4033;border-radius:8px;padding:10px;text-align:center">
+          <div id="tourney-games-played" style="font-family:'Audiowide',sans-serif;font-size:18px;color:#ffd700">0/3</div>
+          <div style="font-size:10px;opacity:.6">Games Played</div>
+        </div>
+        <div style="background:#2c1f1f;border:1px solid #5c4033;border-radius:8px;padding:10px;text-align:center">
+          <div id="tourney-points" style="font-family:'Audiowide',sans-serif;font-size:18px;color:#ffd700">0</div>
+          <div style="font-size:10px;opacity:.6">Points</div>
+        </div>
+        <div style="background:#2c1f1f;border:1px solid #5c4033;border-radius:8px;padding:10px;text-align:center">
+          <div id="tourney-record" style="font-family:'Audiowide',sans-serif;font-size:14px;color:#ffd700">0W-0D-0L</div>
+          <div style="font-size:10px;opacity:.6">Record</div>
+        </div>
+      </div>
+      <button type="button" class="btn btn-gold" id="tourney-play-btn" onclick="startTourneyGame()">▶ PLAY GAME</button>
+      <div id="tourney-done-msg" style="display:none;font-size:13px;color:#00ff88;text-align:center;padding:8px">✅ You've played all 3 games this window. Wait for the next window to play again.</div>
+    </div>
+
+    <!-- Live leaderboard -->
+    <div style="background:#2c1f1f;border:2px solid #5c4033;border-radius:10px;overflow:hidden;margin-top:8px">
+      <div class="prize-row prize-head"><span>Rank</span><span>Player</span><span style="text-align:right">Pts</span><span style="text-align:right">Played</span><span style="text-align:right">Status</span></div>
+      <div id="tourney-lb-body"><div style="padding:16px;text-align:center;font-size:12px;opacity:.5">Loading...</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- PRIZE LEADERBOARD PAGE -->
+<!-- PRIZE LEADERBOARD PAGE -->
+<div id="pg-prize" class="pg" style="justify-content:flex-start;padding-top:20px;background:linear-gradient(160deg,#08081a,#0f0f00)">
+  <div class="prize-wrap">
+    <div class="back-row">
+      <button type="button" class="btn btn-nav" onclick="showPg('pg-home')">BACK</button>
+      <h2 style="flex:1;text-align:center;font-size:clamp(11px,3vw,14px);color:#ffd700;font-family:'Orbitron',sans-serif">🏆 DAILY PRIZE BOARD</h2>
+      <div style="width:52px"></div>
+    </div>
+    <!-- Prize structure -->
+    <div class="prize-banner">
+      <h3>💰 TODAY'S PRIZES</h3>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:4px">
+        <div style="background:rgba(255,215,0,.1);border:1px solid #ffd700;border-radius:8px;padding:8px 4px">
+          <div style="font-size:16px">🥇🥈🥉</div>
+          <div style="font-size:11px;color:#ffd700;font-weight:700">Top 3</div>
+          <div style="font-size:13px;font-weight:700">10,000 UGX</div>
+        </div>
+        <div style="background:rgba(100,200,100,.08);border:1px solid #4a9a4a;border-radius:8px;padding:8px 4px">
+          <div style="font-size:16px">4️⃣-🔟</div>
+          <div style="font-size:11px;color:#88dd88;font-weight:700">4th–10th</div>
+          <div style="font-size:13px;font-weight:700">7,000 UGX</div>
+        </div>
+        <div style="background:rgba(100,150,255,.08);border:1px solid #4a6aaa;border-radius:8px;padding:8px 4px">
+          <div style="font-size:16px">1️⃣1️⃣-1️⃣5️⃣</div>
+          <div style="font-size:11px;color:#88aaff;font-weight:700">11th–15th</div>
+          <div style="font-size:13px;font-weight:700">5,000 UGX</div>
+        </div>
+      </div>
+      <p style="margin-top:4px">Resets at midnight · Only registered players · Online wins only</p>
+    </div>
+    <!-- Registration status -->
+    <div id="prize-reg-status" class="reg-status inactive">⚪ Not registered today — tap to register</div>
+    <button type="button" class="btn btn-gold" onclick="openRegModal()" id="prize-reg-btn">🎯 REGISTER FOR TODAY (2,000 UGX)</button>
+    <!-- Countdown -->
+    <div style="text-align:center;font-size:12px;opacity:.5">Resets in: <span id="prize-countdown" style="font-family:'Audiowide',sans-serif;color:#ffd700"></span></div>
+    <!-- Leaderboard table -->
+    <div style="background:#2c1f1f;border:2px solid #5c4033;border-radius:10px;overflow:hidden">
+      <div class="prize-row prize-head"><span>Rank</span><span>Player</span><span style="text-align:right">Wins</span><span style="text-align:right">Prize</span><span style="text-align:right">Status</span></div>
+      <div id="prize-lb-body"><div style="padding:16px;text-align:center;font-size:12px;opacity:.5">Loading...</div></div>
+    </div>
+    <p style="font-size:10px;opacity:.3;text-align:center">Registration open 9:00 AM – 10:00 PM · Prizes paid via mobile money after 10:00 PM</p>
+  </div>
+</div>
+
+<!-- REGISTRATION MODAL -->
+<div id="ov-register" class="ov">
+  <div class="reg-modal">
+    <h2>🎯 DAILY REGISTRATION</h2>
+    <p>Pay <strong style="color:#ffd700">2,000 UGX</strong> to be eligible for today's prizes.<br>Registration resets at midnight.</p>
+    <div class="reg-steps">
+      <div class="reg-step">
+        <div class="reg-step-num">1</div>
+        
+ <div>Send <strong style="color:#ffd700">2,000 UGX</strong> via Airtel Money to:<br><strong style="color:#ffd700;font-size:15px;letter-spacing:2px" id="reg-phone-display">0700 000 000</strong></div>
+      </div>
+      <div class="reg-step">
+        <div class="reg-step-num">2</div>
+        <div>You'll receive a <strong style="color:#ffd700">6-digit code</strong> from the admin on Telegram or SMS after payment is confirmed.</div>
+      </div>
+      <div class="reg-step">
+        <div class="reg-step-num">3</div>
+        <div>Enter your code below to activate today's registration.</div>
+      </div>
+    </div>
+    <input class="inp" type="tel" id="reg-phone-inp" placeholder="Your MTN/Airtel number e.g. 0771234567" maxlength="13" style="text-align:center"/>
+    <input class="inp" type="text" id="reg-code-inp" maxlength="6" placeholder="Enter 6-digit code" style="text-align:center;font-size:18px;letter-spacing:4px;font-family:'Audiowide',sans-serif;text-transform:uppercase"/>
+    <div class="err" id="reg-err"></div>
+    <button type="button" class="btn btn-gold" onclick="submitRegCode()">✅ ACTIVATE</button>
+    <button type="button" class="btn btn-ghost" onclick="closeOv('ov-register')">CANCEL</button>
+  </div>
+</div>
+
+<!-- ONLINE MODAL -->
+<div id="ov-online" class="ov">
+  <div class="modal">
+    <h2>🌐 PLAY ONLINE</h2>
+
+    <!-- STEP 1: REGISTRATION GATE -->
+    <div id="ol-reg-gate" style="display:flex;flex-direction:column;gap:10px">
+      <div id="ol-reg-banner" style="background:rgba(255,215,0,.07);border:2px solid #ffd700;border-radius:10px;padding:12px;text-align:center;display:flex;flex-direction:column;gap:6px">
+        <div style="font-family:'Orbitron',sans-serif;font-size:12px;color:#ffd700">💰 DAILY REGISTRATION</div>
+        <div id="ol-reg-text" style="font-size:12px;opacity:.8;line-height:1.7">Pay <strong style="color:#ffd700">2,000 UGX</strong> to play online and compete for prizes today.<br>Already paid? Enter your code below.</div>
+        <div id="ol-reg-active-msg" style="display:none;font-size:13px;color:#00ff88;font-weight:700">✅ Registered today — you're eligible for prizes!</div>
+      </div>
+
+      <!-- Code entry — shown only if not registered -->
+      <div id="ol-code-entry" style="display:flex;flex-direction:column;gap:8px">
+        <div style="font-size:12px;opacity:.6;text-align:center">Enter your 6-digit registration code:</div>
+        <input class="inp" type="tel" id="ol-phone-inp" placeholder="Your MTN/Airtel number e.g. 0771234567" maxlength="13" style="font-size:14px"/>
+        <input class="inp" type="text" id="ol-reg-inp" maxlength="6" placeholder="ABC123" style="text-align:center;font-size:20px;letter-spacing:6px;font-family:'Audiowide',sans-serif;text-transform:uppercase"/>
+        <div class="err" id="ol-reg-err"></div>
+        <button type="button" class="btn btn-gold" onclick="submitOnlineRegCode()">✅ ACTIVATE & PLAY ONLINE</button>
+        <a href="https://t.me/+J_bsAhFHdCk5MDZk" target="_blank" rel="noopener" style="display:flex;align-items:center;gap:6px;background:#1a3a5c;border:1px solid #229ED9;border-radius:8px;padding:8px 12px;text-decoration:none;color:#f0d9b5;font-size:11px;justify-content:center">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="#229ED9"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.894 8.221-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.447 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.12L7.43 13.617l-2.962-.924c-.643-.204-.657-.643.136-.953l11.57-4.461c.537-.194 1.006.131.72.942z"/></svg>
+          Get your code on Telegram
+        </a>
+      </div>
+      <!-- Already registered — skip code entry -->
+      <div id="ol-already-reg" style="display:none;flex-direction:column;gap:8px">
+        <button type="button" class="btn btn-gold" onclick="enterOnlineRegistered()">▶ ENTER LOBBY</button>
+      </div>
+    </div>
+
+    <!-- STEP 2: LOBBY -->
+    <div id="ol-lobby" style="display:none;flex-direction:column;gap:10px">
+      <div id="ol-lobby-reg-badge" style="background:rgba(0,255,136,.08);border:1px solid #00ff88;border-radius:8px;padding:8px 12px;font-size:12px;color:#00ff88;text-align:center"></div>
+      <!-- Create room -->
+      <div id="ol-idle" style="display:flex;flex-direction:column;gap:8px">
+        <div id="online-count" style="font-size:11px;color:#00ff88;text-align:center"></div>
+        <div class="player-list" id="player-list"><div style="font-size:12px;opacity:.5;text-align:center;padding:12px">Loading players...</div></div>
+        <div style="font-size:12px;opacity:.5;text-align:center;margin-top:4px">— or use a room code —</div>
+        <button type="button" class="btn btn-gold" onclick="createRoom()">➕ CREATE ROOM</button>
+        <div style="display:flex;gap:6px">
+          <input class="inp" type="text" id="join-inp" maxlength="6" placeholder="Room code" style="text-align:center;font-size:18px;letter-spacing:4px;font-family:'Audiowide',sans-serif"/>
+          <button type="button" class="btn btn-sm" onclick="joinRoom()">JOIN</button>
+        </div>
+        <div id="challenge-banner" class="challenge-banner" style="display:none">
+          <div id="challenge-text">Someone wants to play!</div>
+          <div style="display:flex;gap:8px">
+            <button type="button" class="btn btn-gold" style="flex:1" onclick="acceptChallenge()">✅ ACCEPT</button>
+            <button type="button" class="btn btn-ghost" style="flex:1" onclick="declineChallenge()">❌ DECLINE</button>
+          </div>
+        </div>
+        <div id="ol-admin-phone" style="font-size:10px;opacity:.3;text-align:center"></div>
+      </div>
+      <!-- Waiting for opponent -->
+      <div id="ol-wait" style="display:none;flex-direction:column;gap:8px;text-align:center">
+        <div class="room-code" id="room-code-disp"></div>
+        <div style="font-size:12px;opacity:.6">Share this code with your opponent</div>
+        <div id="ol-status" style="font-size:13px;color:#ffd700"></div>
+        <button type="button" class="btn btn-ghost" onclick="cancelRoom()">CANCEL</button>
+      </div>
+    </div>
+    <button type="button" class="btn btn-ghost" onclick="closeOv('ov-online')">🏠 BACK TO HOME</button>
+  </div>
+</div>
+<!-- THEMES MODAL -->
+<div id="ov-themes" class="ov">
+  <div class="modal">
+    <h2>🎨 BOARD THEMES</h2>
+    <div class="tg" id="theme-grid"></div>
+    <p style="font-size:12px;color:#ffd700;margin-top:4px">Your piece color</p>
+    <div class="color-row" id="color-picker-game"></div>
+    <button type="button" class="btn btn-sm" onclick="closeOv('ov-themes')">CLOSE</button>
+  </div>
+</div>
+
+<!-- NICKNAME MODAL -->
+<div class="nick-ov" id="nick-ov">
+  <div class="nick-modal">
+    <h2>✏️ SET YOUR NICKNAME</h2>
+    <p>Choose a nickname that other players will see when you are online.<br>You can change it anytime — unlimited!</p>
+    <div class="nick-preview" id="nick-preview">Your Nickname</div>
+    <input class="inp" type="text" id="nick-inp" maxlength="18" placeholder="Enter nickname..." style="text-align:center;font-size:16px;letter-spacing:1px" oninput="updateNickPreview()"/>
+    <div class="nick-chars"><span id="nick-count">0</span>/18</div>
+    <div class="err" id="nick-err"></div>
+    <button type="button" class="btn btn-gold" onclick="saveNickname()">✅ SAVE NICKNAME</button>
+    <button type="button" class="btn btn-ghost" onclick="closeNickModal()">CANCEL</button>
+  </div>
+</div>
+
+<script>
+// ── FIREBASE CONFIG ──
+var FIREBASE_CONFIG={apiKey:"AIzaSyBAyQBcJ_1J57z6n8JwFj0QYG6seOcWk28",authDomain:"checkers-king-d247e.firebaseapp.com",projectId:"checkers-king-d247e",storageBucket:"checkers-king-d247e.firebasestorage.app",messagingSenderId:"121278520070",appId:"1:121278520070:web:dd7d6e937760bebb46dc87"};
+var fbAuth=null,fbDb=null;
+
+// ── CONSTANTS ──
+var BS=8,WP='w',BP='b',WK='W',BK='B',WPR=0,BPR=7;
+var DIRS=[[-1,-1],[-1,1],[1,-1],[1,1]];
+var LEVEL_DEPTH={easy:1,medium:3,hard:8};
+var LEVEL_RANDOM={easy:0.4,medium:0.05,hard:0};
+
+// ── PIECE COLORS ──
+var PIECE_COLORS=['white','black','red','blue','green','orange','purple','gold'];
+var COLOR_HEX={white:'#d0d0d0',black:'#333',red:'#cc0000',blue:'#0055cc',green:'#009900',orange:'#ff6600',purple:'#7700cc',gold:'#ccaa00'};
+
+// ── BOARD THEMES ──
+var THEMES=[
+  {n:'Wood',l:'#DEB887',d:'#8B4513'},
+  {n:'Classic',l:'#f0d9b5',d:'#b58863'},
+  {n:'Forest',l:'#d4e8c0',d:'#4a7043'},
+  {n:'Ocean',l:'#cce8f4',d:'#1a5f7a'},
+  {n:'Midnight',l:'#4a4a7a',d:'#12122a'},
+  {n:'Crimson',l:'#f0d0d0',d:'#8b0000'},
+  {n:'Gold',l:'#fff5cc',d:'#b8860b'},
+  {n:'Slate',l:'#c8d8e8',d:'#4a6080'}
+];
+
+// ── STATE ──
+var U={name:null,uid:null,google:false};
+var AI={level:'easy',goFirst:false};
+var PC={p1Color:'white',p2Color:'black'}; // piece colors
+var GS={
+  board:null,cur:'white',sel:null,moves:[],
+  els:[],hist:[],timer:null,t0:0,
+  theme:0,mode:'pvp',aiOn:false,aiGoFirst:false,
+  clockW:30,clockB:30,clockInt:null,oppHighlight:null,
+  drawOffered:false
+};
+var OL={
+  code:null,role:null,on:false,joinTs:0,
+  pendingChallenge:null,presenceInterval:null,
+  unsubMoves:null,unsubRoom:null,unsubPlayers:null
+};
+
+var LB_TAB='all';
+
+// ── COMPUTER TOURNAMENT STATE ──
+var TOURNEY_FEE=3000;
+var TOURNEY_PRIZES=[8000,7000,5000]; // rank 1, 2, 3 — if tied at a rank, split that rank's prize evenly
+var TOURNEY_GAMES=3;
+var TOURNEY_DIFFICULTIES=['medium','hard']; // randomly picked per game, same odds for every player
+var TOURNEY_MEDIUM_CHANCE=0; // always hard — 0 = full hard, 0.5 = half medium
+function pickTourneyDifficulty(){
+  return Math.random()<TOURNEY_MEDIUM_CHANCE?'medium':'hard';
+}
+var TR={entry:null,gamesPlayed:0,points:0,inProgress:false};
+
+function isTourneyOpen(){
+  var h=new Date().getHours();
+  return h>=10&&h<22; // open 10am, closed 10pm
+}
+
+function getTourneyWindowKey(){
+  // 2-hour windows starting at 10am: 10-12, 12-14, 14-16, 16-18, 18-20, 20-22
+  var now=new Date();
+  var h=now.getHours();
+  var windowStart=10+Math.floor((h-10)/2)*2;
+  var d=now.getFullYear()+'-'+(now.getMonth()+1)+'-'+now.getDate();
+  return d+'_'+windowStart;
+}
+
+function getTourneyWindowLabel(){
+  var now=new Date();
+  var h=now.getHours();
+  if(!isTourneyOpen())return'Closed — opens 10:00 AM';
+  var windowStart=10+Math.floor((h-10)/2)*2;
+  var windowEnd=windowStart+2;
+  function fmt(hr){var ap=hr>=12?'PM':'AM';var dh=hr>12?hr-12:hr;if(dh===0)dh=12;return dh+':00 '+ap;}
+  return fmt(windowStart)+' – '+fmt(windowEnd);
+}
+
+function getTourneyMsLeftInWindow(){
+  var now=new Date();
+  var h=now.getHours();
+  var windowStart=10+Math.floor((h-10)/2)*2;
+  var end=new Date();
+  end.setHours(windowStart+2,0,0,0);
+  return end-now;
+}
+
+// ── SOUNDS ──
+var actx=null;
+function getActx(){
+  if(!actx)actx=new(window.AudioContext||window.webkitAudioContext)();
+  if(actx.state==='suspended')actx.resume();
+  return actx;
+}
+function playSound(type){
+  try{
+    var ctx=getActx(),o=ctx.createOscillator(),g=ctx.createGain();
+    o.connect(g);g.connect(ctx.destination);
+    if(type==='move'){o.frequency.setValueAtTime(520,ctx.currentTime);o.frequency.exponentialRampToValueAtTime(440,ctx.currentTime+0.1);g.gain.setValueAtTime(0.3,ctx.currentTime);g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+0.15);o.start(ctx.currentTime);o.stop(ctx.currentTime+0.15);}
+    else if(type==='capture'){o.frequency.setValueAtTime(300,ctx.currentTime);o.frequency.exponentialRampToValueAtTime(150,ctx.currentTime+0.2);g.gain.setValueAtTime(0.4,ctx.currentTime);g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+0.2);o.start(ctx.currentTime);o.stop(ctx.currentTime+0.2);}
+    else if(type==='king'){o.type='square';o.frequency.setValueAtTime(440,ctx.currentTime);o.frequency.setValueAtTime(554,ctx.currentTime+0.1);o.frequency.setValueAtTime(659,ctx.currentTime+0.2);g.gain.setValueAtTime(0.3,ctx.currentTime);g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+0.35);o.start(ctx.currentTime);o.stop(ctx.currentTime+0.35);}
+    else if(type==='win'){o.type='square';o.frequency.setValueAtTime(523,ctx.currentTime);o.frequency.setValueAtTime(659,ctx.currentTime+0.15);o.frequency.setValueAtTime(784,ctx.currentTime+0.3);o.frequency.setValueAtTime(1047,ctx.currentTime+0.45);g.gain.setValueAtTime(0.3,ctx.currentTime);g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+0.7);o.start(ctx.currentTime);o.stop(ctx.currentTime+0.7);}
+    else if(type==='tick'){o.frequency.setValueAtTime(800,ctx.currentTime);g.gain.setValueAtTime(0.15,ctx.currentTime);g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+0.05);o.start(ctx.currentTime);o.stop(ctx.currentTime+0.05);}
+    else if(type==='opponent'){o.type='sine';o.frequency.setValueAtTime(660,ctx.currentTime);o.frequency.exponentialRampToValueAtTime(440,ctx.currentTime+0.2);g.gain.setValueAtTime(0.25,ctx.currentTime);g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+0.25);o.start(ctx.currentTime);o.stop(ctx.currentTime+0.25);}
+    else if(type==='draw'){o.frequency.setValueAtTime(440,ctx.currentTime);o.frequency.setValueAtTime(440,ctx.currentTime+0.1);o.frequency.setValueAtTime(440,ctx.currentTime+0.2);g.gain.setValueAtTime(0.25,ctx.currentTime);g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+0.4);o.start(ctx.currentTime);o.stop(ctx.currentTime+0.4);}
+  }catch(e){}
+}
+document.addEventListener('click',function(){getActx();},{once:false});
+document.addEventListener('touchstart',function(){getActx();},{once:false,passive:true});
+
+// ── FIREBASE INIT ──
+function initFirebase(cb){
+  var tries=0,wait=setInterval(function(){
+    tries++;
+    if(typeof firebase!=='undefined'){
+      clearInterval(wait);
+      try{
+        if(!firebase.apps.length)firebase.initializeApp(FIREBASE_CONFIG);
+        fbAuth=firebase.auth();fbDb=firebase.firestore();
+        if(cb)cb();
+      }catch(e){if(cb)cb();}
+    }else if(tries>=20){clearInterval(wait);if(cb)cb();}
+  },150);
+}
+
+// ── NAVIGATION ──
+function showPg(id){
+  var pages=document.querySelectorAll('.pg');
+  for(var i=0;i<pages.length;i++)pages[i].style.display='none';
+  var el=document.getElementById(id);if(!el)return;
+  el.style.display='flex';window.scrollTo(0,0);
+  if(id==='pg-home'){listenForOnlinePlayers();}
+  if(id==='pg-lb')renderLB();
+  if(id==='pg-ai-setup'){refreshAiSetupUI();buildColorPickers();}
+  if(id==='pg-prize'){updatePrizeRegStatus();renderPrizeLB();startPrizeCountdown();}
+  if(id==='pg-tourney'){renderTourneyPage();}
+}
+
+function renderTourneyPage(){
+  var statusEl=document.getElementById('tourney-window-status');
+  var notEntered=document.getElementById('tourney-not-entered');
+  var entered=document.getElementById('tourney-entered');
+  if(!isTourneyOpen()){
+    statusEl.textContent='🔒 Closed — opens 10:00 AM';
+    notEntered.style.display='none';
+    entered.style.display='none';
+    renderTourneyLB();
+    return;
+  }
+  var msLeft=getTourneyMsLeftInWindow();
+  var mins=Math.floor(msLeft/60000),secs=Math.floor((msLeft%60000)/1000);
+  statusEl.textContent='Window: '+getTourneyWindowLabel()+' · Closes in '+mins+'m '+secs+'s';
+  document.getElementById('tourney-phone-display').textContent=ADMIN_PHONE;
+
+  if(hasEnteredTourney()){
+    notEntered.style.display='none';
+    entered.style.display='flex';
+    var progress=getTourneyProgress();
+    document.getElementById('tourney-games-played').textContent=(progress.gamesPlayed||0)+'/'+TOURNEY_GAMES;
+    document.getElementById('tourney-points').textContent=progress.points||0;
+    document.getElementById('tourney-record').textContent=(progress.wins||0)+'W-'+(progress.draws||0)+'D-'+(progress.losses||0)+'L';
+    var playBtn=document.getElementById('tourney-play-btn');
+    var doneMsg=document.getElementById('tourney-done-msg');
+    if((progress.gamesPlayed||0)>=TOURNEY_GAMES){
+      playBtn.style.display='none';doneMsg.style.display='block';
+    }else{
+      playBtn.style.display='block';doneMsg.style.display='none';
+      playBtn.textContent='▶ PLAY GAME '+((progress.gamesPlayed||0)+1)+' OF '+TOURNEY_GAMES;
+    }
+  }else{
+    notEntered.style.display='flex';
+    entered.style.display='none';
+  }
+  renderTourneyLB();
+}
+
+// Groups sorted players into rank-tiers by equal points, then assigns prizes
+// per tier: TOURNEY_PRIZES[0] is rank-1's prize pool, [1] is rank-2's, [2] is rank-3's.
+// If N players tie within a single rank-tier, that tier's fixed prize is split N ways.
+// Example: 2 players tie for 1st → each gets 8000/2 = 4000. 3rd place (untied) still gets 5000 alone.
+function computeTourneyPrizes(players){
+  var prizeByUid={};
+  var idx=0;
+  for(var tier=0;tier<TOURNEY_PRIZES.length&&idx<players.length;tier++){
+    var tierScore=players[idx].points||0;
+    var tierMembers=[];
+    while(idx<players.length&&(players[idx].points||0)===tierScore){
+      tierMembers.push(players[idx]);
+      idx++;
+    }
+    if(tierScore<=0)break; // never pay out a 0-point tier
+    var share=Math.round(TOURNEY_PRIZES[tier]/tierMembers.length);
+    for(var m=0;m<tierMembers.length;m++){
+      prizeByUid[tierMembers[m].uid]=share;
+    }
+  }
+  return prizeByUid;
+}
+
+function renderTourneyLB(){
+  var body=document.getElementById('tourney-lb-body');
+  if(!body)return;
+  if(!fbDb){body.innerHTML='<div style="padding:14px;text-align:center;font-size:12px;opacity:.5">Not connected.</div>';return;}
+  var windowKey=getTourneyWindowKey();
+  fbDb.collection('tourney_entries').where('windowKey','==',windowKey).get().then(function(snap){
+    var players=[];
+    snap.forEach(function(doc){players.push(doc.data());});
+    if(!players.length){
+      body.innerHTML='<div style="padding:16px;text-align:center;font-size:12px;opacity:.5">No entries yet this window.</div>';
+      return;
+    }
+    players.sort(function(a,b){return(b.points||0)-(a.points||0);});
+    var prizeByUid=computeTourneyPrizes(players);
+    var html='';
+    for(var i=0;i<players.length;i++){
+      var p=players[i];
+      var rank=i+1;
+      var prize=prizeByUid[p.uid];
+      var inPrizes=prize!==undefined;
+      var statusBadge=inPrizes?'<span class="prize-badge" style="background:rgba(0,255,136,.15);color:#00ff88">🏆 PRIZE</span>':'<span class="prize-badge" style="background:rgba(255,255,255,.05);color:#aaa">-</span>';
+      var isMe=p.uid===U.uid;
+      html+='<div class="prize-row'+(isMe?' lb-me':'')+(inPrizes?' prize-zone-1':'')+'"><span style="font-weight:700">'+rank+'</span><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+escHtml(p.avatar||'👑')+' '+escHtml(p.name)+(isMe?' ⭐':'')+'</span><span style="text-align:right">'+(p.points||0)+'</span><span style="text-align:right">'+(p.gamesPlayed||0)+'/'+TOURNEY_GAMES+'</span><span style="text-align:right">'+statusBadge+'</span></div>';
+    }
+    body.innerHTML=html;
+  }).catch(function(){body.innerHTML='<div style="padding:14px;text-align:center;font-size:12px;opacity:.5">Could not load leaderboard.</div>';});
+}
+function openOv(id){
+  var el=document.getElementById(id);el.style.display='flex';
+  if(id==='ov-themes'){buildThemeGrid();buildGameColorPicker();}
+  if(id==='ov-online'){initOnlineModal();}
+}
+
+function initOnlineModal(){
+  // registration/lobby only open from 9am
+  if(!isOnlineRegOpen()){
+    document.getElementById('ol-reg-gate').style.display='flex';
+    document.getElementById('ol-reg-active-msg').style.display='none';
+    document.getElementById('ol-reg-text').innerHTML='Online play and registration opens at <strong style="color:#ffd700">9:00 AM</strong> daily.';
+    document.getElementById('ol-code-entry').style.display='none';
+    document.getElementById('ol-already-reg').style.display='none';
+    document.getElementById('ol-lobby').style.display='none';
+    return;
+  }
+  // set admin phone
+  var ph=document.getElementById('ol-admin-phone');
+  if(ph)ph.textContent=ADMIN_PHONE;
+  // clear errors
+  var err=document.getElementById('ol-reg-err');if(err)err.textContent='';
+  var inp=document.getElementById('ol-reg-inp');if(inp)inp.value='';
+  if(isRegisteredToday()){
+    // show already-registered state
+    document.getElementById('ol-reg-gate').style.display='flex';
+    document.getElementById('ol-reg-active-msg').style.display='block';
+    document.getElementById('ol-reg-text').style.display='none';
+    document.getElementById('ol-code-entry').style.display='none';
+    document.getElementById('ol-already-reg').style.display='flex';
+  }else{
+    // show code entry
+    document.getElementById('ol-reg-gate').style.display='flex';
+    document.getElementById('ol-reg-active-msg').style.display='none';
+    document.getElementById('ol-reg-text').style.display='block';
+    document.getElementById('ol-code-entry').style.display='flex';
+    document.getElementById('ol-already-reg').style.display='none';
+  }
+  document.getElementById('ol-lobby').style.display='none';
+}
+
+function submitOnlineRegCode(){
+  var code=(document.getElementById('ol-reg-inp').value||'').trim().toUpperCase();
+  var err=document.getElementById('ol-reg-err');
+  err.textContent='';
+  if(!isOnlineRegOpen()){err.textContent='❌ Registration is closed. Opens 9:00 AM, closes 10:00 PM.';return;}
+  if(code.length!==6){err.textContent='Enter the full 6-digit code.';return;}
+  if(!fbDb){err.textContent='No connection. Try again.';return;}
+  fbDb.collection('reg_codes').doc(code).get().then(function(doc){
+    if(!doc.exists){err.textContent='❌ Invalid code. Get yours on Telegram.';return;}
+    var d=doc.data();
+    if(d.used){err.textContent='❌ Code already used.';return;}
+    if(d.date!==getTodayKey()){err.textContent='❌ Code is for a different day.';return;}
+var phone=(document.getElementById('ol-phone-inp').value||'').trim();
+    fbDb.collection('reg_codes').doc(code).update({used:true,usedBy:U.uid,usedName:getDisplayName(),usedTs:Date.now()});
+    setRegisteredToday(phone);
+    playSound('king');
+    enterOnlineRegistered();
+  }).catch(function(){err.textContent='Connection error. Try again.';});
+}
+
+function enterOnlineRegistered(){
+  document.getElementById('ol-reg-gate').style.display='none';
+  document.getElementById('ol-lobby').style.display='flex';
+  var badge=document.getElementById('ol-lobby-reg-badge');
+  if(badge)badge.textContent='✅ Registered today — your wins count for prizes!';
+  refreshOnlinePlayers();
+  listenForOnlinePlayers();
+}
+
+function enterOnlineWithoutReg(){
+  document.getElementById('ol-reg-gate').style.display='none';
+  document.getElementById('ol-lobby').style.display='flex';
+  var badge=document.getElementById('ol-lobby-reg-badge');
+  if(badge){badge.textContent='👀 Playing without registration — wins won\'t count for prizes';badge.style.borderColor='#888';badge.style.color='#aaa';}
+  refreshOnlinePlayers();
+  listenForOnlinePlayers();
+}
+
+function backToRegGate(){
+  document.getElementById('ol-lobby').style.display='none';
+  initOnlineModal();
+}
+function closeOv(id){
+  document.getElementById(id).style.display='none';
+  if(id==='ov-online'){
+    if(OL.unsubPlayers){OL.unsubPlayers();OL.unsubPlayers=null;}
+    showPg('pg-home');
+    listenForOnlinePlayers();
+  }
+}
+function goHome(){
+  if(GS.mode==='online'&&OL.on){
+    if(!confirm('Leave the online game? Your opponent will win.'))return;
+    notifyOpponentLeft();
+  }
+  clearInterval(GS.timer);clearInterval(GS.clockInt);
+  clearInterval(GS.rematchTimer);
+  if(GS.tourneyMode){GS.tourneyMode=false;}
+  olCleanup();setOffline();showPg('pg-home');
+}
+
+// Tells the opponent (via Firestore) that this player left, so their game
+// ends immediately instead of waiting indefinitely for a move that will never come.
+function notifyOpponentLeft(){
+  if(fbDb&&OL.code){
+    fbDb.collection('rooms').doc(OL.code).collection('moves').add({
+      type:'OPPONENT_LEFT',role:OL.role,ts:Date.now()
+    });
+    fbDb.collection('rooms').doc(OL.code).update({resolved:true,status:'abandoned'}).catch(function(){});
+  }
+}
+
+// Explicit forfeit/resign button — counts as an immediate loss for the
+// forfeiting player, ends the game for both sides right away.
+function forfeitOnlineGame(){
+  if(GS.mode!=='online'||!OL.on)return;
+  if(!confirm('Forfeit this game? This counts as a loss.'))return;
+  var myColor=OL.role==='host'?'white':'black';
+  if(fbDb&&OL.code){
+    fbDb.collection('rooms').doc(OL.code).collection('moves').add({
+      type:'FORFEIT',role:OL.role,forfeiterColor:myColor,ts:Date.now()
+    });
+    fbDb.collection('rooms').doc(OL.code).update({resolved:true}).catch(function(){});
+  }
+  clearInterval(GS.clockInt);clearInterval(GS.timer);
+  gameOver(buildWinMsg(myColor==='white'?'black':'white'),true);
+}
+
+// ── AUTH ──
+function googleSignIn(){
+  var e=document.getElementById('login-err');e.textContent='';
+  if(!fbAuth){e.textContent='Firebase not ready.';return;}
+  var p=new firebase.auth.GoogleAuthProvider();
+  fbAuth.signInWithPopup(p)
+    .then(function(r){if(r&&r.user)finishGoogleLogin(r.user);})
+    .catch(function(err){
+      if(err.code==='auth/popup-blocked'||err.code==='auth/popup-closed-by-user'){e.textContent='Trying redirect...';fbAuth.signInWithRedirect(p).catch(function(e2){e.textContent=e2.message;});}
+      else{e.textContent=err.message||'Sign-in failed.';}
+    });
+}
+function finishGoogleLogin(user){U.name=user.displayName||user.email||'Player';U.uid=user.uid;U.google=true;localStorage.setItem('ck_u',JSON.stringify(U));enterHome();loadCloudScore(function(){});}
+function emailLogin(){
+  var email=document.getElementById('email-inp').value.trim(),pass=document.getElementById('pass-inp').value,err=document.getElementById('login-err');
+  err.textContent='';if(!email||!pass){err.textContent='Enter email and password.';return;}if(!fbAuth){err.textContent='Firebase not ready.';return;}
+  fbAuth.signInWithEmailAndPassword(email,pass)
+    .then(function(r){U.name=r.user.displayName||email.split('@')[0];U.uid=r.user.uid;U.google=true;localStorage.setItem('ck_u',JSON.stringify(U));enterHome();loadCloudScore(function(){});})
+    .catch(function(e){err.textContent=e.message;});
+}
+function emailRegister(){
+  var email=document.getElementById('email-inp').value.trim(),pass=document.getElementById('pass-inp').value,err=document.getElementById('login-err');
+  err.textContent='';if(!email||!pass){err.textContent='Enter email and password.';return;}if(pass.length<6){err.textContent='Password must be 6+ characters.';return;}if(!fbAuth){err.textContent='Firebase not ready.';return;}
+  fbAuth.createUserWithEmailAndPassword(email,pass)
+    .then(function(r){U.name=email.split('@')[0];U.uid=r.user.uid;U.google=true;localStorage.setItem('ck_u',JSON.stringify(U));enterHome();})
+    .catch(function(e){err.textContent=e.message;});
+}
+function guestLogin(){
+  var v=(document.getElementById('uname').value||'').trim();
+  var a=['Swift','Bold','Clever','Mighty','Sneaky','Royal','Iron'],n=['King','Knight','Pawn','Crown','Bishop','Castle'];
+  U.name=v||(a[Math.floor(Math.random()*a.length)]+' '+n[Math.floor(Math.random()*n.length)]);
+  U.uid='g_'+Date.now();U.google=false;localStorage.setItem('ck_u',JSON.stringify(U));enterHome();
+}
+function enterHome(){
+  document.getElementById('welcome').textContent='';
+  updateProfileCard();
+  showPg('pg-home');
+  setOnline();listenForChallenges();listenForOnlinePlayers();
+}
+function doLogout(){
+  olCleanup();setOffline();U.name=null;U.uid=null;U.google=false;
+  localStorage.removeItem('ck_u');
+  if(fbAuth)fbAuth.signOut().catch(function(){});
+  showPg('pg-login');
+}
+function tryRestore(){
+  try{var s=JSON.parse(localStorage.getItem('ck_u'));if(s&&s.name){U.name=s.name;U.uid=s.uid;U.google=s.google||false;return true;}}catch(e){}return false;
+}
+
+// ── NICKNAME SYSTEM ──
+var AVATARS=['👑','⚔️','🛡️','🎯','🔥','💎','🌟','🎮','🦁','🐯','🦊','🐺'];
+
+function getNickname(){
+  // nickname saved separately from auth name
+  return localStorage.getItem('ck_nick')||U.name||'Player';
+}
+
+function getAvatar(){
+  return localStorage.getItem('ck_avatar')||'👑';
+}
+
+function getDisplayName(){
+  // nickname takes priority over auth name
+  var nick=localStorage.getItem('ck_nick');
+  return nick||U.name||'Player';
+}
+
+function updateProfileCard(){
+  var nick=getDisplayName();
+  var avatar=getAvatar();
+  var nicknameEl=document.getElementById('home-nickname');
+  var tagEl=document.getElementById('home-tag');
+  var avatarEl=document.getElementById('home-avatar');
+  if(nicknameEl)nicknameEl.textContent=nick;
+  if(avatarEl)avatarEl.textContent=avatar;
+  if(tagEl){
+    var lb=getLB();var wins=0,games=0;
+    for(var i=0;i<lb.length;i++){if(lb[i].name===nick){wins=lb[i].wins;games=lb[i].games;break;}}
+    var rank='';
+    for(var j=0;j<lb.length;j++){if(lb[j].name===nick){rank='Rank #'+(j+1)+' · ';break;}}
+    tagEl.textContent=rank+wins+' wins · '+(games?Math.round(wins/games*100)+'% win rate':'New player');
+  }
+  // update U.name so online systems use nickname
+  U.name=nick;
+}
+
+function openNickModal(){
+  var current=localStorage.getItem('ck_nick')||'';
+  var inp=document.getElementById('nick-inp');
+  var preview=document.getElementById('nick-preview');
+  var err=document.getElementById('nick-err');
+  inp.value=current;
+  preview.textContent=current||'Your Nickname';
+  if(err)err.textContent='';
+  document.getElementById('nick-count').textContent=current.length;
+  // build avatar picker inside modal
+  buildAvatarPicker();
+  document.getElementById('nick-ov').classList.add('show');
+  setTimeout(function(){inp.focus();},100);
+}
+
+function closeNickModal(){
+  document.getElementById('nick-ov').classList.remove('show');
+}
+
+function updateNickPreview(){
+  var val=document.getElementById('nick-inp').value;
+  document.getElementById('nick-preview').textContent=val||'Your Nickname';
+  document.getElementById('nick-count').textContent=val.length;
+}
+
+function buildAvatarPicker(){
+  var modal=document.getElementById('nick-modal-content');
+  if(!modal)return;
+  // already built
+}
+
+function saveNickname(){
+  var val=(document.getElementById('nick-inp').value||'').trim();
+  var err=document.getElementById('nick-err');
+  err.textContent='';
+  if(!val){err.textContent='Please enter a nickname.';return;}
+  if(val.length<2){err.textContent='Nickname must be at least 2 characters.';return;}
+  if(val.length>18){err.textContent='Nickname must be 18 characters or less.';return;}
+  // check for bad characters
+  if(!/^[a-zA-Z0-9 _\-\.👑⚔️🛡️🎯🔥💎🌟🎮🦁🐯🦊🐺]+$/.test(val)){
+    err.textContent='Only letters, numbers, spaces and _ - . allowed.';return;
+  }
+  // save nickname
+  localStorage.setItem('ck_nick',val);
+  U.name=val;
+  // save to firestore if logged in
+  if(fbDb&&U.uid){
+    fbDb.collection('presence').doc(U.uid).update({name:val}).catch(function(){});
+    if(U.google){
+      fbDb.collection('leaderboard').doc(U.uid).update({name:val}).catch(function(){});
+    }
+  }
+  // save to localStorage user object
+  var stored=JSON.parse(localStorage.getItem('ck_u')||'{}');
+  stored.name=val;
+  localStorage.setItem('ck_u',JSON.stringify(stored));
+  closeNickModal();
+  updateProfileCard();
+  // show success briefly
+  var tag=document.getElementById('home-tag');
+  if(tag){var old=tag.textContent;tag.textContent='✅ Nickname saved!';tag.style.color='#00ff88';setTimeout(function(){tag.style.color='';updateProfileCard();},2000);}
+}
+
+// ── BOOT ──
+function boot(){
+  var t=parseInt(localStorage.getItem('ck_th'),10);GS.theme=(!isNaN(t)&&t>=0&&t<THEMES.length)?t:4;
+  var pc=localStorage.getItem('ck_pc');if(pc)try{PC=JSON.parse(pc);}catch(e){}
+  checkWeekReset();
+  initFirebase(function(){
+    if(fbAuth){
+      fbAuth.getRedirectResult()
+        .then(function(r){if(r&&r.user)finishGoogleLogin(r.user);else afterRedirectCheck();})
+        .catch(function(){afterRedirectCheck();});
+    }else afterRedirectCheck();
+  });
+}
+function afterRedirectCheck(){
+  if(tryRestore()){
+    document.getElementById('welcome').textContent='';
+    updateProfileCard();
+    showPg('pg-home');
+    setTimeout(function(){setOnline();listenForChallenges();},300);
+  }else showPg('pg-login');
+}
+
+// ── PRESENCE & ONLINE PLAYERS ──
+function setOnline(){
+  if(!fbDb||!U.uid)return;
+  var displayName=getDisplayName();
+  U.name=displayName;
+  // use merge:true and NEVER write dailyWins/dailyWinsDate here — those are
+  // only written by recordOnlineWinFor() so we don't accidentally wipe them
+  fbDb.collection('presence').doc(U.uid).set({
+    name:displayName,uid:U.uid,online:true,status:'lobby',
+    ts:Date.now(),avatar:getAvatar()
+  },{merge:true}).catch(function(){});
+  clearInterval(OL.presenceInterval);
+  OL.presenceInterval=setInterval(function(){
+    if(!fbDb||!U.uid)return;
+    fbDb.collection('presence').doc(U.uid).update({ts:Date.now()}).catch(function(){});
+  },25000);
+}
+function setOffline(){
+  clearInterval(OL.presenceInterval);
+  if(!fbDb||!U.uid)return;
+  fbDb.collection('presence').doc(U.uid).set({name:U.name,uid:U.uid,online:false,ts:Date.now()},{merge:true}).catch(function(){});
+}
+function setStatus(s){
+  if(!fbDb||!U.uid)return;
+  fbDb.collection('presence').doc(U.uid).update({status:s}).catch(function(){});
+}
+
+// Real-time player list listener
+// Real-time player list — starts immediately on login, always live
+function listenForOnlinePlayers(){
+  if(!fbDb)return;
+  if(OL.unsubPlayers){OL.unsubPlayers();OL.unsubPlayers=null;}
+ OL.unsubPlayers=fbDb.collection('presence').where('online','==',true).onSnapshot(function(snap){
+    var list=document.getElementById('player-list');
+    var countEl=document.getElementById('online-count');
+    if(!list)return;
+    var players=[];
+    var cutoff=Date.now()-90000;
+    snap.forEach(function(doc){
+      var d=doc.data();
+      if(d.uid!==U.uid&&d.ts>cutoff)players.push(d);
+    });
+    players=players.slice(0,30);
+    if(countEl)countEl.textContent=players.length?players.length+' online':'';
+    if(!players.length){
+      list.innerHTML='<div style="font-size:12px;opacity:.5;text-align:center;padding:16px">No other players online right now.<br><span style="font-size:10px">Use a room code to play with friends.</span></div>';
+      return;
+    }
+    // sort: lobby first, then by wins
+    players.sort(function(a,b){
+      if(a.status==='lobby'&&b.status!=='lobby')return -1;
+      if(a.status!=='lobby'&&b.status==='lobby')return 1;
+      return(b.wins||0)-(a.wins||0);
+    });
+    var html='';
+    for(var i=0;i<players.length;i++){
+      var p=players[i];
+      var pct=p.games?Math.round((p.wins||0)/p.games*100)+'%':'-';
+      var inLobby=p.status==='lobby';
+      html+='<div class="player-item" style="'+(inLobby?'':'opacity:.6')+'">';
+      html+='<div class="dot" style="background:'+(inLobby?'#00ff88':'#aaa')+';box-shadow:'+(inLobby?'0 0 6px #00ff88':'none')+'"></div>';
+      html+='<div style="flex:1;min-width:0">';
+      html+='<div style="font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+(p.avatar||'👑')+' '+escHtml(p.name)+'</div>';
+      html+='<div style="font-size:10px;opacity:.6">'+(p.wins||0)+' wins · '+pct+(inLobby?' · <span style="color:#00ff88">Ready</span>':' · <span style="color:#aaa">In game</span>')+'</div>';
+      html+='</div>';
+      if(inLobby){
+        html+='<button type="button" class="ch-btn" onclick="sendChallenge(\''+p.uid+'\',\''+escHtml(p.name)+'\')">⚔️ PLAY</button>';
+      }else{
+        html+='<span style="font-size:10px;opacity:.4;background:#3c2f2f;padding:3px 7px;border-radius:4px">busy</span>';
+      }
+      html+='</div>';
+    }
+    list.innerHTML=html;
+  },function(){
+    var list=document.getElementById('player-list');
+    if(list)list.innerHTML='<div style="font-size:12px;opacity:.5;text-align:center;padding:16px">Could not load players.</div>';
+  });
+}
+
+function refreshOnlinePlayers(){
+  var list=document.getElementById('player-list');
+  if(!fbDb){
+    if(list)list.innerHTML='<div style="font-size:12px;opacity:.5;text-align:center;padding:12px">Firebase not connected.</div>';
+    return;
+  }
+  listenForOnlinePlayers();
+}
+
+function escHtml(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+
+// ── DRAW SYSTEM ──
+function offerDraw(){
+  if(GS.mode==='online'&&OL.on&&OL.code&&fbDb){
+    fbDb.collection('rooms').doc(OL.code).collection('moves').add({type:'DRAW_OFFER',role:OL.role,ts:Date.now()});
+    alert('Draw offered! Waiting for opponent response...');
+  }else{
+    // Local PvP or AI
+    var other=GS.cur==='white'?'Black':'White';
+    document.getElementById('draw-text').textContent=GS.cur.charAt(0).toUpperCase()+GS.cur.slice(1)+' is offering a draw. '+other+', do you accept?';
+    document.getElementById('draw-banner').classList.add('show');
+  }
+}
+function acceptDraw(){
+  document.getElementById('draw-banner').classList.remove('show');
+  if(GS.mode==='online'&&OL.on&&OL.code&&fbDb){
+    fbDb.collection('rooms').doc(OL.code).collection('moves').add({type:'DRAW_ACCEPT',role:OL.role,ts:Date.now()});
+  }
+  playSound('draw');
+  gameOver('🤝 GAME DRAWN!');
+}
+function declineDraw(){
+  document.getElementById('draw-banner').classList.remove('show');
+  if(GS.mode==='online'&&OL.on&&OL.code&&fbDb){
+    fbDb.collection('rooms').doc(OL.code).collection('moves').add({type:'DRAW_DECLINE',role:OL.role,ts:Date.now()});
+  }
+}
+
+// ── BOARD SERIALIZATION ──
+function boardToString(b){var s='';for(var i=0;i<8;i++)for(var j=0;j<8;j++)s+=(b[i][j]||'0');return s;}
+function stringToBoard(s){var b=[];for(var i=0;i<8;i++){var row=[];for(var j=0;j<8;j++){var ch=s[i*8+j];row.push(ch==='0'?null:ch);}b.push(row);}return b;}
+
+// ── ONLINE MULTIPLAYER ──
+function olCleanup(){
+  if(OL.unsubMoves){OL.unsubMoves();OL.unsubMoves=null;}
+  if(OL.unsubRoom){OL.unsubRoom();OL.unsubRoom=null;}
+  if(OL.unsubPlayers){OL.unsubPlayers();OL.unsubPlayers=null;}
+  OL.on=false;
+}
+
+function createRoom(){
+  if(!fbDb){alert('Firebase not connected. Check your internet.');return;}
+  var code=String(Math.floor(100000+Math.random()*900000));
+  OL.code=code;OL.role='host';OL.on=false;OL.joinTs=Date.now();
+  document.getElementById('ol-idle').style.display='none';
+  document.getElementById('ol-wait').style.display='block';
+  document.getElementById('room-code-disp').textContent=code;
+  document.getElementById('ol-status').textContent='Waiting for opponent...';
+  setStatus('waiting');
+  fbDb.collection('rooms').doc(code).set({host:U.name,hostUid:U.uid,status:'waiting',ts:Date.now(),resolved:false});
+  OL.unsubRoom=fbDb.collection('rooms').doc(code).onSnapshot(function(doc){
+    if(!doc.exists||OL.on)return;
+    var d=doc.data();
+    if(d.status==='joined'){
+      OL.on=true;OL.joinTs=Date.now();
+      OL.guestUid=d.guestUid;OL.guestName=d.guest;
+      if(OL.unsubRoom){OL.unsubRoom();OL.unsubRoom=null;}
+      closeOv('ov-online');GS.mode='online';showPg('pg-game');newGame();setStatus('playing');listenForMoves();
+      setTimeout(function(){
+        fbDb.collection('rooms').doc(OL.code).collection('moves').add({
+          type:'SYNC',role:'host',
+          board:boardToString(GS.board),cur:GS.cur,
+          clockW:20,clockB:20,ts:Date.now()
+        });
+      },2000);
+    }
+  });
+}
+
+function joinRoom(){
+  if(!fbDb){alert('Firebase not connected.');return;}
+  var code=document.getElementById('join-inp').value.trim();
+  if(code.length!==6||isNaN(Number(code))){document.getElementById('join-inp').style.borderColor='#ff6b6b';return;}
+  OL.code=code;OL.role='guest';OL.on=true;OL.joinTs=Date.now();
+  document.getElementById('join-inp').style.borderColor='';
+  closeOv('ov-online');GS.mode='online';showPg('pg-game');newGame();setStatus('playing');listenForMoves();
+  fbDb.collection('rooms').doc(code).update({status:'joined',guest:U.name,guestUid:U.uid}).catch(function(e){
+    console.error('Join room error:',e);
+  });
+}
+
+function cancelRoom(){
+  olCleanup();OL.code=null;OL.role=null;
+  document.getElementById('ol-idle').style.display='block';
+  document.getElementById('ol-wait').style.display='none';
+  setStatus('lobby');
+}
+
+function listenForMoves(){
+  if(OL.unsubMoves){OL.unsubMoves();OL.unsubMoves=null;}
+  var startTs=OL.joinTs;
+  OL.unsubMoves=fbDb.collection('rooms').doc(OL.code).collection('moves')
+    .orderBy('ts')
+    .onSnapshot(function(snap){
+      snap.docChanges().forEach(function(change){
+        if(change.type==='added'){
+          var data=change.doc.data();
+          if(data.ts>startTs&&data.role!==OL.role){olRecv(data);}
+        }
+      });
+    },function(err){console.error('listenForMoves error:',err);});
+}
+
+function olRecv(msg){
+  if(msg.type==='SYNC'){
+    GS.board=stringToBoard(msg.board);GS.cur=msg.cur;
+    GS.clockW=msg.clockW!==undefined?msg.clockW:30;GS.clockB=msg.clockB!==undefined?msg.clockB:30;
+    GS.sel=null;GS.moves=[];GS.hist=[];GS.aiOn=false;
+    buildBoardDOM();render();refreshTurn();clearInterval(GS.clockInt);startClock();
+    playSound('opponent');
+  }
+  if(msg.type==='MOVE'){
+    GS.hist.push({board:cloneB(GS.board),cur:GS.cur});
+    GS.board=stringToBoard(msg.board);GS.cur=msg.cur;
+    GS.clockW=msg.clockW!==undefined?msg.clockW:30;GS.clockB=msg.clockB!==undefined?msg.clockB:30;
+    GS.sel=null;GS.moves=[];render();refreshTurn();
+    clearOpponentHighlight();
+    if(msg.fromR!==undefined&&GS.els[msg.fromR]&&GS.els[msg.toR]){
+      if(GS.els[msg.fromR][msg.fromC])GS.els[msg.fromR][msg.fromC].classList.add('opponent-from');
+      if(GS.els[msg.toR][msg.toC])GS.els[msg.toR][msg.toC].classList.add('opponent-to');
+      GS.oppHighlight=setTimeout(function(){clearOpponentHighlight();},2000);
+    }
+    playSound('opponent');clearInterval(GS.clockInt);startClock();
+    var res=checkEnd();if(res)gameOver(res);
+  }
+  if(msg.type==='TIMEOUT'){
+    clearInterval(GS.clockInt);
+    var winningColor=msg.loserColor==='white'?'black':'white';
+    gameOver(buildWinMsg(winningColor));
+  }
+  if(msg.type==='FORFEIT'){
+    clearInterval(GS.clockInt);clearInterval(GS.timer);
+    var forfeitWinnerColor=msg.forfeiterColor==='white'?'black':'white';
+    gameOver(buildWinMsg(forfeitWinnerColor),true);
+  }
+  if(msg.type==='OPPONENT_LEFT'){
+    clearInterval(GS.clockInt);clearInterval(GS.timer);
+    alert('Your opponent left the game. You win!');
+    leaveOnlineGame();
+  }
+  if(msg.type==='DRAW_OFFER'){
+    playSound('draw');
+    document.getElementById('draw-text').textContent='Opponent is offering a draw. Accept?';
+    document.getElementById('draw-banner').classList.add('show');
+  }
+  if(msg.type==='DRAW_ACCEPT'){playSound('draw');gameOver('🤝 GAME DRAWN!');}
+  if(msg.type==='DRAW_DECLINE'){alert('Opponent declined the draw.');}
+  if(msg.type==='REMATCH_REQUEST'){
+    GS_rematch.theyWant=true;
+    if(GS_rematch.iWant){
+      // both want rematch
+      clearInterval(GS_rematch.timer);
+      startRematchGame();
+    }else{
+      // show notification to user
+      document.getElementById('rematch-status').textContent='🔄 Opponent wants a rematch!';
+    }
+  }
+  if(msg.type==='REMATCH_DECLINE'){
+    clearInterval(GS_rematch.timer);
+    document.getElementById('rematch-status').textContent='❌ Opponent left the game.';
+    document.getElementById('rematch-ask').style.display='none';
+    document.getElementById('rematch-waiting').style.display='none';
+    document.getElementById('rematch-countdown').textContent='';
+    setTimeout(function(){leaveOnlineGame();},2000);
+  }
+}
+
+function clearOpponentHighlight(){
+  if(GS.oppHighlight){clearTimeout(GS.oppHighlight);GS.oppHighlight=null;}
+  for(var r=0;r<BS;r++)for(var c=0;c<BS;c++){
+    if(GS.els[r]&&GS.els[r][c]){GS.els[r][c].classList.remove('opponent-from');GS.els[r][c].classList.remove('opponent-to');}
+  }
+}
+
+function sendChallenge(targetUid,targetName){
+  if(!fbDb||!U.uid)return;
+  var code=String(Math.floor(100000+Math.random()*900000));
+  OL.code=code;OL.role='host';OL.on=false;OL.joinTs=Date.now();
+  fbDb.collection('challenges').doc(targetUid).set({
+    fromUid:U.uid,fromName:U.name,code:code,ts:Date.now(),status:'pending'
+  }).then(function(){
+    document.getElementById('ol-idle').style.display='none';
+    document.getElementById('ol-wait').style.display='block';
+    document.getElementById('room-code-disp').textContent=code;
+    document.getElementById('ol-status').textContent='Challenge sent to '+targetName+'...';
+    fbDb.collection('rooms').doc(code).set({host:U.name,hostUid:U.uid,status:'waiting',ts:Date.now()});
+    setStatus('waiting');
+    listenForChallengeAccept(targetUid);
+  }).catch(function(e){console.error('sendChallenge error:',e);});
+}
+
+function listenForChallengeAccept(targetUid){
+  if(!fbDb)return;
+  var unsub=fbDb.collection('challenges').doc(targetUid).onSnapshot(function(doc){
+    if(!doc.exists)return;
+    var d=doc.data();
+    if(d.status==='accepted'){unsub();startOnlineGameAsHost();}
+    if(d.status==='declined'){unsub();document.getElementById('ol-status').textContent='Challenge declined.';}
+  });
+}
+
+function listenForChallenges(){
+  if(!fbDb||!U.uid)return;
+  fbDb.collection('challenges').doc(U.uid).onSnapshot(function(doc){
+    if(!doc.exists)return;
+    var d=doc.data();
+    if(d.status==='pending'&&Date.now()-d.ts<90000){
+      OL.pendingChallenge=d;
+      document.getElementById('challenge-text').textContent=d.fromName+' wants to play!';
+      document.getElementById('challenge-banner').style.display='flex';
+      document.getElementById('ov-online').style.display='flex';
+      playSound('opponent');
+    }
+  });
+}
+
+function acceptChallenge(){
+  if(!OL.pendingChallenge||!fbDb)return;
+  var d=OL.pendingChallenge;
+  OL.code=d.code;OL.role='guest';OL.on=true;OL.joinTs=Date.now();
+  fbDb.collection('challenges').doc(U.uid).update({status:'accepted'});
+  document.getElementById('challenge-banner').style.display='none';closeOv('ov-online');
+  GS.mode='online';showPg('pg-game');newGame();setStatus('playing');listenForMoves();
+  fbDb.collection('rooms').doc(OL.code).update({status:'joined',guest:U.name,guestUid:U.uid});
+}
+
+function declineChallenge(){
+  if(fbDb&&U.uid)fbDb.collection('challenges').doc(U.uid).update({status:'declined'}).catch(function(){});
+  OL.pendingChallenge=null;
+  document.getElementById('challenge-banner').style.display='none';
+}
+
+function startOnlineGameAsHost(){
+  OL.on=true;OL.joinTs=Date.now();
+  if(OL.unsubRoom){OL.unsubRoom();OL.unsubRoom=null;}
+  fbDb.collection('rooms').doc(OL.code).get().then(function(doc){
+    if(doc.exists){var d=doc.data();OL.guestUid=d.guestUid;OL.guestName=d.guest;}
+  });
+  closeOv('ov-online');GS.mode='online';showPg('pg-game');newGame();setStatus('playing');listenForMoves();
+  setTimeout(function(){
+    fbDb.collection('rooms').doc(OL.code).collection('moves').add({
+      type:'SYNC',role:'host',board:boardToString(GS.board),cur:GS.cur,
+      clockW:20,clockB:20,ts:Date.now()
+    });
+  },2000);
+}
+
+// ── LEADERBOARD (online wins only — sourced from presence.dailyWins, the same field the prize board uses) ──
+function checkWeekReset(){
+  // Daily reset bookkeeping kept for other systems (tournament window etc.)
+  var key=getDailyResetKey();
+  if(localStorage.getItem('ck_dreset')!==key){
+    localStorage.setItem('ck_dreset',key);
+  }
+}
+function getDailyResetKey(){
+  var now=new Date();
+  var reset=new Date();
+  reset.setHours(22,0,0,0);
+  if(now>=reset)reset.setDate(reset.getDate()+1);
+  return reset.toDateString();
+}
+
+// recordResult no longer touches the Top 30 leaderboard.
+// Local PvP and AI/practice games are not ranked — only verified online wins count,
+// and those are written exclusively by recordOnlineWinFor() in gameOver().
+function recordResult(winner,loser){
+  // Intentionally a no-op for ranking purposes. Kept as a stub so existing
+  // calls elsewhere in the code (AI win-msg display, etc.) don't error out.
+}
+
+// Compatibility stubs — getLB/saveLB no longer back the Top 30 leaderboard
+// (that now reads live from Firestore via renderLbData), but updateProfileCard()
+// and setOnline() still call getLB() to show a personal win count. Returning an
+// empty array here is safe and keeps those functions from throwing.
+function getLB(){ return []; }
+function saveLB(lb){ /* no-op — leaderboard storage moved to Firestore presence collection */ }
+
+function renderLB(){checkWeekReset();renderLbData();}
+
+function renderLbData(){
+  var body=document.getElementById('lb-body');
+  var rankDisp=document.getElementById('my-rank-display');
+  var nameDisp=document.getElementById('my-rank-name');
+  var statWins=document.getElementById('my-stat-wins');
+  var statTotal=document.getElementById('my-stat-total');
+  var statAbove=document.getElementById('my-stat-above');
+  if(body)body.innerHTML='<div class="lb-row" style="grid-template-columns:1fr;justify-content:center;padding:10px;opacity:.5">Loading...</div>';
+  if(!fbDb){
+    if(body)body.innerHTML='<div class="lb-row" style="grid-template-columns:1fr;opacity:.5;justify-content:center;padding:12px">Not connected.</div>';
+    return;
+  }
+  var today=getTodayKey();
+  fbDb.collection('presence')
+    .where('dailyWinsDate','==',today)
+    .get()
+    .then(function(snap){
+      var lb=[];
+      snap.forEach(function(doc){
+        var d=doc.data();
+        if((d.dailyWins||0)>0)lb.push({name:d.name||'Player',uid:doc.id,wins:d.dailyWins||0});
+      });
+      lb.sort(function(a,b){return b.wins-a.wins;});
+      // find MY position
+      var myIdx=-1;
+      var myWins=0;
+      for(var i=0;i<lb.length;i++){
+        if(lb[i].uid===U.uid){myIdx=i;myWins=lb[i].wins;break;}
+      }
+      var myRank=myIdx>=0?(myIdx+1):null;
+      var totalPlayers=lb.length;
+      // update personal stat cards
+      if(rankDisp)rankDisp.textContent=myRank?('#'+myRank):'#—';
+      if(nameDisp)nameDisp.textContent=getDisplayName();
+      if(statWins)statWins.textContent=myWins;
+      if(statTotal)statTotal.textContent=totalPlayers||0;
+      if(statAbove)statAbove.textContent=myRank?(myRank-1):0;
+      if(!lb.length){
+        if(body)body.innerHTML='<div class="lb-row" style="grid-template-columns:1fr;opacity:.5;justify-content:center;padding:12px">No online wins yet today. Play online to get ranked!</div>';
+        return;
+      }
+      // show 2 players above, yourself, 2 players below
+      var start=Math.max(0,myIdx-2);
+      var end=Math.min(lb.length-1,myIdx>=0?myIdx+2:4);
+      // if not on the board yet, show top 5 instead
+      if(myIdx<0){start=0;end=Math.min(4,lb.length-1);}
+      var medals=['🥇','🥈','🥉'];
+      var html='';
+      for(var j=start;j<=end;j++){
+        var e=lb[j],me=e.uid===U.uid;
+        var rank=j+1;
+        var rankClass=j===0?'lb-rank-1':j===1?'lb-rank-2':j===2?'lb-rank-3':'';
+        var rankStr=j<3?medals[j]:rank+'';
+        html+='<div class="lb-row'+(me?' lb-me':'')+'" style="'+(me?'border:1px solid #ffd700;border-radius:6px;':'')+'"><span class="'+rankClass+'">'+rankStr+'</span><span>'+escHtml(e.name)+(me?' 👈 YOU':'')+'</span><span style="text-align:right">'+e.wins+'</span><span style="text-align:right;opacity:.5;font-size:10px">'+(me?'':'')+'</span></div>';
+      }
+      if(body)body.innerHTML=html;
+    })
+    .catch(function(err){
+      console.error('renderLbData error:',err);
+      if(body)body.innerHTML='<div class="lb-row" style="grid-template-columns:1fr;opacity:.5;justify-content:center;padding:12px">Could not load stats.</div>';
+    });
+}
+
+// ── PIECE COLORS ──
+function buildColorPickers(){
+  buildColorPicker('color-picker-1','p1Color');
+  buildColorPicker('color-picker-2','p2Color');
+}
+function buildColorPicker(containerId,key){
+  var container=document.getElementById(containerId);if(!container)return;
+  container.innerHTML='';
+  for(var i=0;i<PIECE_COLORS.length;i++){
+    var col=PIECE_COLORS[i];
+    var div=document.createElement('div');
+    div.className='color-opt'+(PC[key]===col?' sel':'');
+    div.style.background=COLOR_HEX[col];
+    div.title=col;
+    (function(c,k){div.onclick=function(){PC[k]=c;localStorage.setItem('ck_pc',JSON.stringify(PC));buildColorPickers();buildGameColorPicker();};})(col,key);
+    container.appendChild(div);
+  }
+}
+function buildGameColorPicker(){
+  buildColorPicker('color-picker-game','p1Color');
+}
+
+// ── THEMES ──
+function buildThemeGrid(){
+  var grid=document.getElementById('theme-grid');grid.innerHTML='';
+  for(var i=0;i<THEMES.length;i++){
+    var th=THEMES[i],c=document.createElement('div');c.className='tc'+(i===GS.theme?' sel':'');
+    var cells='';for(var r=0;r<4;r++)for(var cc=0;cc<4;cc++)cells+='<div style="background:'+((r+cc)%2===0?th.l:th.d)+'"></div>';
+    c.innerHTML='<div class="tp">'+cells+'</div><div class="tl">'+th.n+'</div>';
+    (function(idx){c.onclick=function(){applyTheme(idx);};})(i);
+    grid.appendChild(c);
+  }
+}
+function applyTheme(i){
+  GS.theme=i;localStorage.setItem('ck_th',i);
+  var th=THEMES[i];
+  for(var r=0;r<BS;r++)for(var c=0;c<BS;c++){
+    var el=GS.els[r]&&GS.els[r][c];
+    if(el){el.className='sq '+((r+c)%2===0?'light':'dark');el.style.background=(r+c)%2===0?th.l:th.d;}
+  }
+  buildThemeGrid();
+}
+
+// ── AI SETUP ──
+function setLevel(lvl){
+  AI.level=lvl;
+  document.getElementById('lvl-easy').className='level-btn'+(lvl==='easy'?' sel':'');
+  document.getElementById('lvl-medium').className='level-btn'+(lvl==='medium'?' sel':'');
+  document.getElementById('lvl-hard').className='level-btn'+(lvl==='hard'?' sel':'');
+  var descs={easy:'Easy — AI picks random moves often. Good for beginners.',medium:'Medium — AI plays smart but will occasionally blunder.',hard:'Hard — Full minimax search. Very tough to beat!'};
+  document.getElementById('level-desc').textContent=descs[lvl];
+}
+function toggleAiFirst(){
+  AI.goFirst=!AI.goFirst;var t=document.getElementById('ai-first-toggle'),h=document.getElementById('ai-first-hint');
+  if(AI.goFirst){t.classList.add('on');h.textContent='Computer plays Black and moves first — you play White';}
+  else{t.classList.remove('on');h.textContent='You play White and move first — computer plays Black';}
+}
+function refreshAiSetupUI(){
+  setLevel(AI.level);var t=document.getElementById('ai-first-toggle'),h=document.getElementById('ai-first-hint');
+  if(AI.goFirst){t.classList.add('on');h.textContent='Computer plays Black and moves first — you play White';}
+  else{t.classList.remove('on');h.textContent='You play White and move first — computer plays Black';}
+}
+function startAiGame(){GS.mode='ai';GS.aiGoFirst=AI.goFirst;showPg('pg-game');newGame();}
+
+// ── TOURNAMENT GAME FLOW ──
+function startTourneyGame(){
+  if(!isTourneyOpen()){alert('Tournament is closed right now.');return;}
+  if(!hasEnteredTourney()){alert('You need to enter the tournament first.');return;}
+  var progress=getTourneyProgress();
+  if(progress.gamesPlayed>=TOURNEY_GAMES){alert('You have already played all '+TOURNEY_GAMES+' of your games this window.');return;}
+  var difficulty=pickTourneyDifficulty();
+  GS.tourneyCurrentDifficulty=difficulty;
+  AI.level=difficulty;
+  GS.mode='ai';
+  GS.aiGoFirst=false;
+  GS.tourneyMode=true;
+  showPg('pg-game');
+  var p2=document.getElementById('p2-label');
+  if(p2)p2.textContent='🤖 Bot ('+difficulty.toUpperCase()+')';
+  newGame();
+}
+
+function recordTourneyGameResult(result){ // result: 'win'|'draw'|'loss'
+  var progress=getTourneyProgress();
+  if(!progress)return;
+  var pts=result==='win'?3:result==='draw'?1:0;
+  progress.points=(progress.points||0)+pts;
+  progress.gamesPlayed=(progress.gamesPlayed||0)+1;
+  if(result==='win')progress.wins=(progress.wins||0)+1;
+  else if(result==='draw')progress.draws=(progress.draws||0)+1;
+  else progress.losses=(progress.losses||0)+1;
+  saveTourneyProgress(progress);
+  if(fbDb&&U.uid){
+    fbDb.collection('tourney_entries').doc(getTourneyWindowKey()+'_'+U.uid).set({
+      uid:U.uid,name:getDisplayName(),avatar:getAvatar(),windowKey:getTourneyWindowKey(),
+      gamesPlayed:progress.gamesPlayed,points:progress.points,
+      wins:progress.wins,draws:progress.draws,losses:progress.losses,
+      ts:Date.now()
+    },{merge:true}).catch(function(){});
+    // audit log: which difficulty this specific game was, for fairness review
+    fbDb.collection('tourney_game_logs').add({
+      uid:U.uid,name:getDisplayName(),windowKey:getTourneyWindowKey(),
+      difficulty:GS.tourneyCurrentDifficulty||'unknown',result:result,pts:pts,ts:Date.now()
+    }).catch(function(){});
+  }
+  GS.tourneyMode=false;
+}
+
+// ── GAME HELPERS ──
+function isKing(p){return p===WK||p===BK;}
+function inB(r,c){return r>=0&&r<BS&&c>=0&&c<BS;}
+function colOf(p){return p?p.toLowerCase():null;}
+function myCo(){return GS.cur==='white'?WP:BP;}
+function cloneB(b){var n=[];for(var i=0;i<b.length;i++)n.push(b[i].slice());return n;}
+function flipTurn(p){return p==='white'?'black':'white';}
+function startGame(mode){GS.mode=mode;showPg('pg-game');newGame();}
+
+// ── BOARD ──
+function initBoard(){
+  GS.board=[];for(var i=0;i<BS;i++)GS.board.push(new Array(BS).fill(null));
+  for(var r=0;r<3;r++)for(var c=0;c<BS;c++)if((r+c)%2===1)GS.board[r][c]=BP;
+  for(var r2=5;r2<BS;r2++)for(var c2=0;c2<BS;c2++)if((r2+c2)%2===1)GS.board[r2][c2]=WP;
+}
+
+function buildBoardDOM(){
+  var cont=document.getElementById('board');cont.innerHTML='';
+  GS.els=[];for(var i=0;i<BS;i++)GS.els.push(new Array(BS).fill(null));
+  var th=THEMES[GS.theme];
+  var flipped=(GS.mode==='online'&&OL.role==='guest');
+  for(var r=0;r<BS;r++)for(var c=0;c<BS;c++){
+    var dr=flipped?(BS-1-r):r,dc=flipped?(BS-1-c):c;
+    var isLight=(dr+dc)%2===0;
+    var sq=document.createElement('div');
+    sq.className='sq '+(isLight?'light':'dark');
+    sq.style.background=isLight?th.l:th.d;
+    sq.dataset.r=dr;sq.dataset.c=dc;
+    sq.addEventListener('click',onSqClick);
+    cont.appendChild(sq);GS.els[dr][dc]=sq;
+  }
+}
+
+function makePiece(p){
+  var isWhite=colOf(p)===WP;
+  var color=isWhite?PC.p1Color:PC.p2Color;
+  var div=document.createElement('div');
+  div.className='pc'+(isKing(p)?' king-piece':'');
+  div.setAttribute('data-color',color);
+  if(isKing(p)){var kl=document.createElement('div');kl.className='king-label';kl.textContent='K';div.appendChild(kl);}
+  return div;
+}
+
+function render(){
+  for(var r=0;r<BS;r++)for(var c=0;c<BS;c++){
+    var sq=GS.els[r][c];sq.innerHTML='';sq.classList.remove('hi');
+    var p=GS.board[r][c];
+    if(p)sq.appendChild(makePiece(p));
+  }
+  for(var i=0;i<GS.moves.length;i++)GS.els[GS.moves[i].r][GS.moves[i].c].classList.add('hi');
+  var w=0,b=0;
+  for(var r2=0;r2<BS;r2++)for(var c2=0;c2<BS;c2++){var p2=GS.board[r2][c2];if(!p2)continue;if(colOf(p2)===WP)w++;else b++;}
+  document.getElementById('pc-score').textContent='White: '+w+' | Black: '+b;
+  var sp=document.getElementById('sp-pcs');if(sp)sp.textContent='W'+w+' B'+b;
+}
+
+function refreshTurn(){
+  var lbl=document.getElementById('turn-lbl'),ico=document.getElementById('turn-ico');
+  var isW=GS.cur==='white';
+  ico.textContent=isW?'⬜':'⬛';
+  var txt;
+  if(GS.mode==='online'){txt=GS.cur===(OL.role==='host'?'white':'black')?'🎮 Your Turn':'⏳ Opponent';}
+  else if(GS.mode==='ai'){txt=isW?(U.name||'You'):(GS.aiOn?'🤔 Thinking...':'🤖 Computer');}
+  else{txt=isW?'White':'Black';} // fallback label only — pvp mode is not offered as a feature
+  lbl.textContent=txt;
+  var sp=document.getElementById('sp-turn');if(sp)sp.textContent=txt;
+  var sm=document.getElementById('sp-mode');if(sm)sm.textContent=GS.mode==='ai'?'VS Computer':GS.mode==='online'?'🌐 Online':'PvP';
+  // show correct game bar
+  var pvpBar=document.getElementById('game-bar-pvp');
+  var onlineBar2=document.getElementById('game-bar-online');
+  var onlineInfoBar=document.getElementById('online-bar');
+  if(GS.mode==='online'){
+    if(pvpBar)pvpBar.style.display='none';
+    if(onlineBar2)onlineBar2.style.display='flex';
+    if(onlineInfoBar)onlineInfoBar.style.display='flex';
+    var roleEmoji=document.getElementById('role-emoji');
+    if(roleEmoji)roleEmoji.textContent=OL.role==='host'?'⬜':'⬛';
+    // update nickname display in online bar
+    var nickDisp=document.getElementById('online-nick-disp');
+    var avatarDisp=document.getElementById('online-avatar-disp');
+    var roleDisp=document.getElementById('online-role-disp');
+    if(nickDisp)nickDisp.textContent=getDisplayName();
+    if(avatarDisp)avatarDisp.textContent=getAvatar();
+    if(roleDisp)roleDisp.textContent='Playing as '+(OL.role==='host'?'White ⬜':'Black ⬛');
+  }else{
+    if(pvpBar)pvpBar.style.display='flex';
+    if(onlineBar2)onlineBar2.style.display='none';
+    if(onlineInfoBar)onlineInfoBar.style.display='none';
+  }
+  // tournament games: hide undo, draw, and home — only allow new-game-free play
+  if(GS.tourneyMode){
+    var undoBtn=document.getElementById('undo-btn');
+    if(undoBtn)undoBtn.style.display='none';
+    if(pvpBar){
+      var drawBtn=pvpBar.querySelector('.success');
+      if(drawBtn)drawBtn.style.display='none';
+    }
+    var homeBtn=document.querySelector('.gh .btn-icon[onclick="goHome()"]');
+    if(homeBtn)homeBtn.style.display='none';
+  }else{
+    var undoBtn2=document.getElementById('undo-btn');
+    if(undoBtn2)undoBtn2.style.display='flex';
+    if(pvpBar){
+      var drawBtn2=pvpBar.querySelector('.success');
+      if(drawBtn2)drawBtn2.style.display='flex';
+    }
+    var homeBtn2=document.querySelector('.gh .btn-icon[onclick="goHome()"]');
+    if(homeBtn2)homeBtn2.style.display='flex';
+  }
+  renderClocks();
+}
+
+// ── CLOCKS ──
+function resetClocks(){clearInterval(GS.clockInt);var t=GS.mode==='online'?20:30;GS.clockW=t;GS.clockB=t;renderClocks();}
+function startClock(){
+  clearInterval(GS.clockInt);if(GS.mode==='ai')return;
+  GS.clockInt=setInterval(function(){
+    if(GS.cur==='white')GS.clockW--;else GS.clockB--;
+    renderClocks();
+    var t2=GS.cur==='white'?GS.clockW:GS.clockB;
+    if(t2<=10)playSound('tick');
+    if(t2<=0){
+      clearInterval(GS.clockInt);
+      var timedOutColor=GS.cur; // the color whose clock just hit zero — they lose
+      if(GS.mode==='online'&&OL.code&&fbDb){
+        var isMyTurn=(OL.role==='host'&&GS.cur==='white')||(OL.role==='guest'&&GS.cur==='black');
+        if(isMyTurn)fbDb.collection('rooms').doc(OL.code).collection('moves').add({type:'TIMEOUT',role:OL.role,loserColor:timedOutColor,ts:Date.now()});
+      }
+      gameOver(buildWinMsg(timedOutColor==='white'?'black':'white'));
+    }
+  },1000);
+}
+function renderClocks(){
+  var cw=document.getElementById('clock-w'),cb=document.getElementById('clock-b');if(!cw||!cb)return;
+  function fmt(s){return'0:'+(s<10?'0':'')+Math.max(s,0);}
+  cw.textContent=fmt(GS.clockW);cb.textContent=fmt(GS.clockB);
+  cw.className='clock'+(GS.cur==='white'?' on':'');
+  cb.className='clock'+(GS.cur==='black'?' on':'');
+  if(GS.cur==='white'&&GS.clockW<=10)cw.className='clock on danger';
+  if(GS.cur==='black'&&GS.clockB<=10)cb.className='clock on danger';
+}
+
+// ── MOVE GENERATION ──
+function normalMoves(r,c,board){
+  var p=board[r][c];if(!p)return[];var col=colOf(p),res=[];
+  if(isKing(p)){for(var d=0;d<DIRS.length;d++){var dr=DIRS[d][0],dc=DIRS[d][1],nr=r+dr,nc=c+dc;while(inB(nr,nc)&&!board[nr][nc]){res.push({r:nr,c:nc});nr+=dr;nc+=dc;}}}
+  else{var fwd=col===WP?[[-1,-1],[-1,1]]:[[1,-1],[1,1]];for(var d2=0;d2<fwd.length;d2++){var nr2=r+fwd[d2][0],nc2=c+fwd[d2][1];if(inB(nr2,nc2)&&!board[nr2][nc2])res.push({r:nr2,c:nc2});}}
+  return res;
+}
+function capMoves(r,c,board,seen){
+  if(!seen)seen={};var p=board[r][c];if(!p)return[];var col=colOf(p),res=[];
+  if(isKing(p)){
+    for(var d=0;d<DIRS.length;d++){var dr=DIRS[d][0],dc=DIRS[d][1],nr=r+dr,nc=c+dc;
+      while(inB(nr,nc)){var sq=board[nr][nc];if(sq){if(colOf(sq)!==col&&!seen[nr+','+nc]){var lr=nr+dr,lc=nc+dc;while(inB(lr,lc)&&!board[lr][lc]){res.push({r:lr,c:lc,er:nr,ec:nc});lr+=dr;lc+=dc;}}break;}nr+=dr;nc+=dc;}}
+  }else{
+    for(var d2=0;d2<DIRS.length;d2++){var mr=r+DIRS[d2][0],mc=c+DIRS[d2][1],lr2=r+DIRS[d2][0]*2,lc2=c+DIRS[d2][1]*2;if(!inB(mr,mc)||!inB(lr2,lc2))continue;var mid=board[mr][mc];if(!mid||colOf(mid)===col||seen[mr+','+mc]||board[lr2][lc2])continue;res.push({r:lr2,c:lc2,er:mr,ec:mc});}
+  }
+  return res;
+}
+function anyCap(player,board){var col=player==='white'?WP:BP;for(var r=0;r<BS;r++)for(var c=0;c<BS;c++){var p=board[r][c];if(p&&colOf(p)===col&&capMoves(r,c,board).length)return true;}return false;}
+function anyMove(player,board){var col=player==='white'?WP:BP;for(var r=0;r<BS;r++)for(var c=0;c<BS;c++){var p=board[r][c];if(!p||colOf(p)!==col)continue;if(normalMoves(r,c,board).length||capMoves(r,c,board).length)return true;}return false;}
+
+// ── INTERACTION ──
+function onSqClick(e){
+  if(GS.aiOn)return;if(GS.mode==='ai'&&GS.cur==='black')return;
+  if(GS.mode==='online'&&OL.role==='host'&&GS.cur!=='white')return;
+  if(GS.mode==='online'&&OL.role==='guest'&&GS.cur!=='black')return;
+  var r=parseInt(e.currentTarget.dataset.r,10),c=parseInt(e.currentTarget.dataset.c,10);
+  if(GS.sel){
+    var hit=null;for(var i=0;i<GS.moves.length;i++){if(GS.moves[i].r===r&&GS.moves[i].c===c){hit=GS.moves[i];break;}}
+    if(hit){doMove(hit);return;}
+    if(GS.board[r][c]&&isOwn(r,c)){pickPiece(r,c);return;}
+    deselect();
+  }else if(GS.board[r][c]&&isOwn(r,c))pickPiece(r,c);
+}
+function isOwn(r,c){var p=GS.board[r][c];return p?colOf(p)===myCo():false;}
+function pickPiece(r,c){
+  var must=anyCap(GS.cur,GS.board),caps=capMoves(r,c,GS.board);if(must&&!caps.length)return;
+  GS.sel={r:r,c:c};
+  if(must){GS.moves=[];for(var i=0;i<caps.length;i++)GS.moves.push({r:caps[i].r,c:caps[i].c,er:caps[i].er,ec:caps[i].ec});}
+  else{var nm=normalMoves(r,c,GS.board);GS.moves=[];for(var i=0;i<nm.length;i++)GS.moves.push({r:nm[i].r,c:nm[i].c,er:null,ec:null});for(var j=0;j<caps.length;j++)GS.moves.push({r:caps[j].r,c:caps[j].c,er:caps[j].er,ec:caps[j].ec});}
+  render();
+}
+function deselect(){GS.sel=null;GS.moves=[];render();}
+function doMove(mv){
+  var fr=GS.sel.r,fc=GS.sel.c,b=GS.board,piece=b[fr][fc];
+  GS.hist.push({board:cloneB(b),cur:GS.cur});
+  var captured=mv.er!=null;
+  if(mv.er!=null)b[mv.er][mv.ec]=null;
+  b[mv.r][mv.c]=piece;b[fr][fc]=null;
+  if(piece===WP&&mv.r===WPR)b[mv.r][mv.c]=WK;if(piece===BP&&mv.r===BPR)b[mv.r][mv.c]=BK;
+  var promoted=b[mv.r][mv.c]!==piece;
+  if(promoted)playSound('king');else if(captured)playSound('capture');else playSound('move');
+  var more=(mv.er!=null&&!promoted)?capMoves(mv.r,mv.c,b):[];
+  if(more.length){GS.sel={r:mv.r,c:mv.c};GS.moves=[];for(var i=0;i<more.length;i++)GS.moves.push({r:more[i].r,c:more[i].c,er:more[i].er,ec:more[i].ec});render();return;}
+  if(GS.mode==='online'&&OL.on&&OL.code&&fbDb){
+    var nextTurn=flipTurn(GS.cur);
+    fbDb.collection('rooms').doc(OL.code).collection('moves').add({
+      type:'MOVE',role:OL.role,board:boardToString(GS.board),cur:nextTurn,
+      fromR:fr,fromC:fc,toR:mv.r,toC:mv.c,
+      clockW:20,clockB:20,
+      ts:Date.now()
+    });
+  }
+  endTurn();
+}
+function endTurn(){
+  GS.sel=null;GS.moves=[];GS.cur=flipTurn(GS.cur);
+  var clockTime=GS.mode==='online'?20:30;
+  if(GS.cur==='white')GS.clockW=clockTime;else GS.clockB=clockTime;
+  refreshTurn();render();
+  var res=checkEnd();if(res){gameOver(res);return;}
+  if(GS.mode==='ai'&&GS.cur==='black'){scheduleAI();return;}
+  if(GS.mode!=='ai')startClock();
+}
+
+// ── WIN CHECK ──
+// Builds a result message personalized to the viewer: "🎉 YOU WIN!" or "😔 YOU LOSE" for
+// online/AI games where there's a real "you", or the neutral WHITE/BLACK form for local fallback.
+function buildWinMsg(winningColor,reasonSuffix){
+  reasonSuffix=reasonSuffix||'';
+  if(GS.mode==='online'){
+    var myColor=OL.role==='host'?'white':'black';
+    var iWon=winningColor===myColor;
+    return(iWon?'🎉 YOU WIN!':'😔 YOU LOSE')+reasonSuffix;
+  }
+  if(GS.mode==='ai'){
+    var humanColor=GS.aiGoFirst?'white':'white'; // human is always white in vs-computer mode
+    var iWon2=winningColor===humanColor;
+    return(iWon2?'🎉 YOU WIN!':'😔 YOU LOSE')+reasonSuffix;
+  }
+  // fallback for any other mode
+  return(winningColor==='white'?'⬜ WHITE WINS!':'⬛ BLACK WINS!')+reasonSuffix;
+}
+
+function checkEnd(){
+  var w=0,b=0;for(var r=0;r<BS;r++)for(var c=0;c<BS;c++){var p=GS.board[r][c];if(!p)continue;if(colOf(p)===WP)w++;else b++;}
+  if(!w)return buildWinMsg('black');
+  if(!b)return buildWinMsg('white');
+  if(!anyMove(GS.cur,GS.board))return buildWinMsg(flipTurn(GS.cur),' (stalemate)');
+  return null;
+}
+function gameOver(msg,skipRematch){
+  clearInterval(GS.timer);clearInterval(GS.clockInt);
+  playSound('win');
+  var isDraw=msg.includes('DRAWN');
+  var iWon=msg.includes('YOU WIN'); // reliable now since buildWinMsg() always says this from the viewer's side
+  if(GS.tourneyMode){
+    var result=isDraw?'draw':(iWon?'win':'loss');
+    recordTourneyGameResult(result);
+  }
+  if(U.name&&!isDraw){
+    if(GS.mode==='ai')recordResult(iWon?U.name:'Computer',iWon?'Computer':U.name);
+    else if(GS.mode==='online'){
+      var myName=getDisplayName();
+      var oppName=OL.role==='host'?OL.guestName:OL.host;
+      recordResult(iWon?myName:oppName,iWon?oppName:myName);
+    }
+    // record online win for prize leaderboard — ONLY the host writes this, never the guest
+    if(GS.mode==='online'&&OL.role==='host'){
+      var hostWon=iWon; // host sees "YOU WIN" only when host actually won
+      var winnerUid=hostWon?U.uid:OL.guestUid;
+      var winnerName=hostWon?getDisplayName():OL.guestName;
+      if(winnerUid){
+        recordOnlineWinFor(winnerUid,winnerName);
+        if(OL.code&&fbDb)fbDb.collection('rooms').doc(OL.code).update({resolved:true}).catch(function(){});
+      }
+    }
+  }
+  document.getElementById('win-msg').textContent=msg;
+  var ov=document.getElementById('win-ov');ov.classList.add('show');ov.style.display='flex';
+  // show correct buttons
+  var normal=document.getElementById('win-btns-normal');
+  var online=document.getElementById('win-btns-online');
+  if(GS.mode==='online'&&!skipRematch){
+    if(normal)normal.style.display='none';
+    if(online)online.style.display='flex';
+    startRematchCountdown()
+  }else if(GS.mode==='online'&&skipRematch){
+    // opponent forfeited or left — no rematch flow, just show result and a way home
+    if(normal)normal.style.display='flex';
+    if(online)online.style.display='none';
+  }else{
+    if(normal)normal.style.display='flex';
+    if(online)online.style.display='none';
+  }
+}
+
+function dismissTourneyWin(){
+  var ov=document.getElementById('win-ov');ov.classList.remove('show');ov.style.display='none';
+  showPg('pg-tourney');
+}
+function dismissWin(){
+  if(GS.tourneyMode){dismissTourneyWin();return;}
+  var ov=document.getElementById('win-ov');ov.classList.remove('show');ov.style.display='none';newGame();
+}
+
+// ── REMATCH SYSTEM ──
+var GS_rematch={timer:null,countdown:10,iWant:false,theyWant:false};
+
+function startRematchCountdown(){
+  GS_rematch.countdown=10;GS_rematch.iWant=false;GS_rematch.theyWant=false;
+  document.getElementById('rematch-ask').style.display='flex';
+  document.getElementById('rematch-waiting').style.display='none';
+  document.getElementById('rematch-status').textContent='';
+  updateRematchCountdown();
+  clearInterval(GS_rematch.timer);
+  GS_rematch.timer=setInterval(function(){
+    GS_rematch.countdown--;
+    updateRematchCountdown();
+    if(GS_rematch.countdown<=0){
+      clearInterval(GS_rematch.timer);
+      // time expired — leave game
+      document.getElementById('rematch-status').textContent='⏰ Time expired. Leaving game...';
+      document.getElementById('rematch-ask').style.display='none';
+      document.getElementById('rematch-countdown').textContent='';
+      setTimeout(function(){leaveOnlineGame();},1500);
+    }
+  },1000);
+}
+
+function updateRematchCountdown(){
+  var el=document.getElementById('rematch-countdown');
+  if(el)el.textContent=GS_rematch.countdown+'s';
+}
+
+function sendRematch(){
+  if(!fbDb||!OL.code)return;
+  GS_rematch.iWant=true;
+  document.getElementById('rematch-ask').style.display='none';
+  document.getElementById('rematch-waiting').style.display='block';
+  // send rematch request via firestore
+  fbDb.collection('rooms').doc(OL.code).collection('moves').add({
+    type:'REMATCH_REQUEST',role:OL.role,ts:Date.now()
+  });
+  // if both want rematch start new game
+  if(GS_rematch.theyWant){
+    clearInterval(GS_rematch.timer);
+    startRematchGame();
+  }
+}
+
+function declineRematch(){
+  clearInterval(GS_rematch.timer);
+  if(fbDb&&OL.code){
+    fbDb.collection('rooms').doc(OL.code).collection('moves').add({
+      type:'REMATCH_DECLINE',role:OL.role,ts:Date.now()
+    });
+  }
+  leaveOnlineGame();
+}
+
+function leaveOnlineGame(){
+  clearInterval(GS_rematch.timer);
+  olCleanup();setOffline();
+  showPg('pg-home');
+}
+
+function startRematchGame(){
+  clearInterval(GS_rematch.timer);
+  GS_rematch.iWant=false;GS_rematch.theyWant=false;
+  var ov=document.getElementById('win-ov');ov.classList.remove('show');ov.style.display='none';
+  // swap roles for rematch
+  OL.role=OL.role==='host'?'guest':'host';
+  OL.joinTs=Date.now();
+  newGame();
+  if(OL.role==='host'){
+    setTimeout(function(){
+      fbDb.collection('rooms').doc(OL.code).collection('moves').add({
+        type:'SYNC',role:'host',board:boardToString(GS.board),
+        cur:GS.cur,clockW:20,clockB:20,ts:Date.now()
+      });
+    },1500);
+  }
+}
+
+// ── UNDO ──
+function undoMove(){
+  if(GS.aiOn||GS.mode==='online')return;
+  var steps=GS.mode==='ai'?2:1;
+  for(var i=0;i<steps;i++){if(!GS.hist.length)break;var s=GS.hist.pop();GS.board=s.board;GS.cur=s.cur;}
+  var ov=document.getElementById('win-ov');ov.classList.remove('show');ov.style.display='none';
+  document.getElementById('draw-banner').classList.remove('show');
+  var clockTime=GS.mode==='online'?20:30;
+  if(GS.cur==='white')GS.clockW=clockTime;else GS.clockB=clockTime;
+  GS.sel=null;GS.moves=[];refreshTurn();render();
+  if(GS.mode!=='ai'){clearInterval(GS.clockInt);startClock();}
+}
+
+// ── NEW GAME ──
+function newGame(){
+  var ov=document.getElementById('win-ov');ov.classList.remove('show');ov.style.display='none';
+  document.getElementById('draw-banner').classList.remove('show');
+  GS.cur=(GS.mode==='ai'&&GS.aiGoFirst)?'black':'white';
+  GS.sel=null;GS.moves=[];GS.hist=[];GS.aiOn=false;GS.drawOffered=false;
+  resetClocks();initBoard();buildBoardDOM();render();refreshTurn();startGameTimer();startClock();
+  if(GS.mode==='ai'&&GS.aiGoFirst)setTimeout(function(){scheduleAI();},700);
+}
+function startGameTimer(){
+  clearInterval(GS.timer);GS.t0=Date.now();
+  GS.timer=setInterval(function(){
+    var s=Math.floor((Date.now()-GS.t0)/1000);
+    document.getElementById('game-timer').textContent=String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0');
+  },1000);
+}
+
+// ── AI ──
+function allMovesAI(player,board){
+  var col=player==='white'?WP:BP,caps=[],norms=[];
+  for(var r=0;r<BS;r++)for(var c=0;c<BS;c++){var p=board[r][c];if(!p||colOf(p)!==col)continue;var chains=buildChains(r,c,board,[],{});for(var i=0;i<chains.length;i++)caps.push(chains[i]);if(!caps.length){var nm=normalMoves(r,c,board);for(var j=0;j<nm.length;j++)norms.push({fr:r,fc:c,tr:nm[j].r,tc:nm[j].c,caps:[]});}}
+  return caps.length?caps:norms;
+}
+function buildChains(r,c,board,done,seen){
+  var caps=capMoves(r,c,board,seen);if(!caps.length){if(!done.length)return[];var last=done[done.length-1];return[{fr:done[0].fr,fc:done[0].fc,tr:last.tr,tc:last.tc,caps:done}];}
+  var res=[];
+  for(var i=0;i<caps.length;i++){
+    var cap=caps[i],fr=done.length?done[0].fr:r,fc2=done.length?done[0].fc:c;
+    var step={fr:fr,fc:fc2,tr:cap.r,tc:cap.c,er:cap.er,ec:cap.ec};
+    var nb=cloneB(board);nb[cap.er][cap.ec]=null;nb[cap.r][cap.c]=nb[r][c];nb[r][c]=null;
+    var pc=nb[cap.r][cap.c];if(pc===WP&&cap.r===WPR)nb[cap.r][cap.c]=WK;if(pc===BP&&cap.r===BPR)nb[cap.r][cap.c]=BK;
+    var prom=nb[cap.r][cap.c]!==pc,nd=done.concat([step]),ns={};for(var k in seen)ns[k]=true;ns[cap.er+','+cap.ec]=true;
+    if(prom){res.push({fr:fr,fc:fc2,tr:cap.r,tc:cap.c,caps:nd});}
+    else{var sub=buildChains(cap.r,cap.c,nb,nd,ns);if(sub.length)for(var j=0;j<sub.length;j++)res.push(sub[j]);else res.push({fr:fr,fc:fc2,tr:cap.r,tc:cap.c,caps:nd});}
+  }
+  return res;
+}
+function applyAIMove(mv,board){var b=cloneB(board),pc=b[mv.fr][mv.fc];b[mv.fr][mv.fc]=null;for(var i=0;i<mv.caps.length;i++)b[mv.caps[i].er][mv.caps[i].ec]=null;b[mv.tr][mv.tc]=pc;if(pc===WP&&mv.tr===WPR)b[mv.tr][mv.tc]=WK;if(pc===BP&&mv.tr===BPR)b[mv.tr][mv.tc]=BK;return b;}
+function evalBoard(board){var s=0;for(var r=0;r<BS;r++)for(var c=0;c<BS;c++){var p=board[r][c];if(!p)continue;var isW=colOf(p)===WP,v=isKing(p)?5:3;if(!isKing(p))v+=isW?(BS-1-r)*0.1:r*0.1;v+=(5-Math.abs(c-3.5)-Math.abs(r-3.5))*0.05;s+=isW?-v:v;}return s;}
+function minimax(board,depth,alpha,beta,isMax){
+  if(!depth)return evalBoard(board);var mvs=allMovesAI(isMax?'black':'white',board);if(!mvs.length)return isMax?-1e9:1e9;var best=isMax?-1e9:1e9;
+  for(var i=0;i<mvs.length;i++){var v=minimax(applyAIMove(mvs[i],board),depth-1,alpha,beta,!isMax);if(isMax){if(v>best)best=v;if(v>alpha)alpha=v;}else{if(v<best)best=v;if(v<beta)beta=v;}if(beta<=alpha)break;}
+  return best;
+}
+function bestAIMove(board){
+  var mvs=allMovesAI('black',board);if(!mvs.length)return null;
+  var depth=LEVEL_DEPTH[AI.level]||2,randomChance=LEVEL_RANDOM[AI.level]||0;
+  if(randomChance>0&&Math.random()<randomChance)return mvs[Math.floor(Math.random()*mvs.length)];
+  var best=-1e9,bm=mvs[0];for(var i=0;i<mvs.length;i++){var s=minimax(applyAIMove(mvs[i],board),depth-1,-1e9,1e9,false);if(s>best){best=s;bm=mvs[i];}}return bm;
+}
+function scheduleAI(){
+  GS.aiOn=true;refreshTurn();var delay=AI.level==='easy'?300:AI.level==='medium'?500:800;
+  setTimeout(function(){
+    var mv=bestAIMove(GS.board);GS.aiOn=false;if(!mv)return;
+    var b=GS.board;GS.hist.push({board:cloneB(b),cur:GS.cur});var pc=b[mv.fr][mv.fc];b[mv.fr][mv.fc]=null;
+    for(var i=0;i<mv.caps.length;i++)b[mv.caps[i].er][mv.caps[i].ec]=null;
+    b[mv.tr][mv.tc]=pc;if(pc===WP&&mv.tr===WPR)b[mv.tr][mv.tc]=WK;if(pc===BP&&mv.tr===BPR)b[mv.tr][mv.tc]=BK;
+    var aiCaptured=mv.caps&&mv.caps.length>0;
+    var aiPromoted=(b[mv.tr][mv.tc]===WK||b[mv.tr][mv.tc]===BK)&&b[mv.tr][mv.tc]!==pc;
+    if(aiPromoted)playSound('king');else if(aiCaptured)playSound('capture');else playSound('move');
+    endTurn();
+  },delay);
+}
+
+// ── PRIZE / REGISTRATION SYSTEM ──
+var ADMIN_PHONE='0701 091 871'; // ← CHANGE THIS TO YOUR NUMBER
+var PRIZE_CODES_KEY='ck_prize_codes'; // valid codes stored here by admin tool
+var REG_KEY='ck_reg';
+
+function getTodayKey(){
+  var d=new Date();
+  return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate();
+}
+function isOnlineRegOpen(){
+  var h=new Date().getHours();
+  return h>=9&&h<22; // opens 9:00 AM, closes 10:00 PM
+}
+function getTourneyEntryKey(){return'ck_tourney_'+getTourneyWindowKey();}
+
+function hasEnteredTourney(){
+  try{
+    var r=JSON.parse(localStorage.getItem(getTourneyEntryKey())||'{}');
+    return r.uid===U.uid&&r.windowKey===getTourneyWindowKey();
+  }catch(e){return false;}
+}
+
+function getTourneyProgress(){
+  try{
+    var r=JSON.parse(localStorage.getItem(getTourneyEntryKey())||'{}');
+    if(r.uid===U.uid&&r.windowKey===getTourneyWindowKey())return r;
+  }catch(e){}
+  return null;
+}
+
+function saveTourneyProgress(progress){
+  progress.uid=U.uid;progress.windowKey=getTourneyWindowKey();
+  localStorage.setItem(getTourneyEntryKey(),JSON.stringify(progress));
+}
+
+function submitTourneyCode(){
+  var code=(document.getElementById('tourney-code-inp').value||'').trim().toUpperCase();
+  var err=document.getElementById('tourney-err');
+  err.textContent='';
+  if(!isTourneyOpen()){err.textContent='❌ Tournament is closed right now. Opens 10:00 AM.';return;}
+  if(code.length!==6){err.textContent='Enter the full 6-digit code.';return;}
+  if(!fbDb){err.textContent='No connection. Try again.';return;}
+  fbDb.collection('tourney_codes').doc(code).get().then(function(doc){
+    if(!doc.exists){err.textContent='❌ Invalid code. Get yours on Telegram.';return;}
+    var d=doc.data();
+    if(d.used){err.textContent='❌ Code already used.';return;}
+    if(d.windowKey!==getTourneyWindowKey()){err.textContent='❌ This code is for a different tournament window.';return;}
+    fbDb.collection('tourney_codes').doc(code).update({used:true,usedBy:U.uid,usedName:getDisplayName(),usedTs:Date.now()});
+    saveTourneyProgress({gamesPlayed:0,points:0,wins:0,draws:0,losses:0,enteredTs:Date.now()});
+    fbDb.collection('tourney_entries').doc(getTourneyWindowKey()+'_'+U.uid).set({
+      uid:U.uid,name:getDisplayName(),avatar:getAvatar(),windowKey:getTourneyWindowKey(),
+      gamesPlayed:0,points:0,wins:0,draws:0,losses:0,ts:Date.now(),paidOut:false
+    },{merge:true}).catch(function(){});
+    playSound('king');
+    renderTourneyPage();
+  }).catch(function(){err.textContent='Connection error. Try again.';});
+}
+
+function isRegisteredToday(){
+  try{
+    var r=JSON.parse(localStorage.getItem(REG_KEY)||'{}');
+    return r.date===getTodayKey()&&r.uid===U.uid;
+  }catch(e){return false;}
+}
+
+function setRegisteredToday(phone){
+  localStorage.setItem(REG_KEY,JSON.stringify({date:getTodayKey(),uid:U.uid,ts:Date.now()}));
+  if(fbDb&&U.uid){
+    // use a fixed doc id per user+day so a second registration attempt just overwrites, never duplicates
+    fbDb.collection('registrations').doc(U.uid+'_'+getTodayKey()).set({
+      uid:U.uid,name:getDisplayName(),date:getTodayKey(),ts:Date.now(),registered:true,
+      phone:phone||''
+    },{merge:true}).catch(function(){});
+  }
+}
+function openRegModal(){
+  document.getElementById('reg-phone-display').textContent=ADMIN_PHONE;
+  document.getElementById('reg-phone-inp').value='';
+  document.getElementById('reg-code-inp').value='';
+  document.getElementById('reg-err').textContent='';
+  document.getElementById('ov-register').style.display='flex';
+}
+
+function submitRegCode(){
+  var code=(document.getElementById('reg-code-inp').value||'').trim().toUpperCase();
+  var phone=(document.getElementById('reg-phone-inp').value||'').trim();
+  var err=document.getElementById('reg-err');
+  err.textContent='';
+  if(!isOnlineRegOpen()){err.textContent='❌ Registration is closed. Opens 9:00 AM, closes 10:00 PM.';return;}
+  if(!phone){err.textContent='Enter the phone number you paid from.';return;}
+  if(code.length!==6){err.textContent='Enter the 6-digit code.';return;}
+  if(!fbDb){err.textContent='No connection. Try again.';return;}
+  // check code in firestore
+  fbDb.collection('reg_codes').doc(code).get().then(function(doc){
+    if(!doc.exists){err.textContent='❌ Invalid code. Check with admin on Telegram.';return;}
+    var d=doc.data();
+    if(d.used){err.textContent='❌ This code has already been used.';return;}
+    if(d.date!==getTodayKey()){err.textContent='❌ This code is for a different day.';return;}
+    // mark code as used
+    fbDb.collection('reg_codes').doc(code).update({used:true,usedBy:U.uid,usedName:getDisplayName(),usedTs:Date.now()});
+    setRegisteredToday(phone);
+    closeOv('ov-register');
+    updatePrizeRegStatus();
+    renderPrizeLB();
+    playSound('king');
+    var btn=document.getElementById('prize-reg-btn');
+    if(btn){btn.textContent='✅ REGISTERED FOR TODAY';btn.style.opacity='.5';btn.onclick=null;}
+    alert('🎉 You are registered for today\'s prizes! Play online to climb the leaderboard.');
+  }).catch(function(){err.textContent='Connection error. Try again.';});
+}
+
+function updatePrizeRegStatus(){
+  var el=document.getElementById('prize-reg-status');
+  var btn=document.getElementById('prize-reg-btn');
+  if(!el)return;
+  if(isRegisteredToday()){
+    el.className='reg-status active';
+    el.textContent='✅ Registered today — your wins count for prizes!';
+    if(btn){btn.textContent='✅ REGISTERED FOR TODAY';btn.style.opacity='.5';btn.onclick=null;}
+  }else{
+    el.className='reg-status inactive';
+    el.textContent='⚪ Not registered today — pay 2,000 UGX to be eligible';
+    if(btn){btn.textContent='🎯 REGISTER FOR TODAY (2,000 UGX)';btn.style.opacity='1';btn.onclick=openRegModal;}
+  }
+}
+
+function renderPrizeLB(){
+  var body=document.getElementById('prize-lb-body');
+  if(!body)return;
+  if(!fbDb){body.innerHTML='<div style="padding:14px;text-align:center;font-size:12px;opacity:.5">Not connected.</div>';return;}
+  body.innerHTML='<div style="padding:14px;text-align:center;font-size:12px;opacity:.5">Loading...</div>';
+  var today=getTodayKey();
+  // get registered UIDs for today
+  fbDb.collection('registrations').where('date','==',today).get().then(function(regSnap){
+    var regUids={};
+    regSnap.forEach(function(doc){regUids[doc.data().uid]=true;});
+    // get all presence docs with wins today — no online filter, wins persist regardless
+    fbDb.collection('presence').where('dailyWinsDate','==',today).get().then(function(snap){
+      var players=[];
+      snap.forEach(function(doc){
+        var d=doc.data();
+        if(regUids[d.uid]&&(d.dailyWins||0)>0){
+          players.push({name:d.name||'Player',uid:d.uid,wins:d.dailyWins||0,avatar:d.avatar||'👑'});
+        }
+      });
+      players.sort(function(a,b){return b.wins-a.wins;});
+      var top20=players.slice(0,20);
+      if(!top20.length){
+        body.innerHTML='<div style="padding:16px;text-align:center;font-size:12px;opacity:.5">No registered players with wins yet today.<br><span style="font-size:10px">Register and play online to appear here.</span></div>';
+        return;
+      }
+      var html='';
+      for(var i=0;i<top20.length;i++){
+        var p=top20[i];
+        var rank=i+1;
+        var prize='',zoneClass='',medal='';
+        if(rank<=3){prize='10,000';zoneClass='prize-zone-1';medal=rank===1?'🥇':rank===2?'🥈':'🥉';}
+        else if(rank<=10){prize='7,000';zoneClass='prize-zone-2';medal=rank+'';}
+        else if(rank<=15){prize='5,000';zoneClass='prize-zone-3';medal=rank+'';}
+        else{prize='—';zoneClass='';medal=rank+'';}
+        var isMe=p.uid===U.uid;
+        html+='<div class="prize-row '+zoneClass+(isMe?' lb-me':'')+'"><span style="font-weight:700">'+medal+'</span><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+escHtml(p.avatar)+' '+escHtml(p.name)+(isMe?' ⭐':'')+'</span><span style="text-align:right">'+p.wins+'</span><span style="text-align:right;color:#ffd700;font-size:10px">'+prize+'</span><span style="text-align:right"><span class="prize-badge" style="background:rgba(0,255,136,.15);color:#00ff88">✅</span></span></div>';
+      }
+      body.innerHTML=html;
+    }).catch(function(err){
+      console.error('renderPrizeLB presence query error:',err);
+      body.innerHTML='<div style="padding:14px;text-align:center;font-size:12px;opacity:.5">Could not load data. Check Firestore indexes.</div>';
+    });
+  }).catch(function(){body.innerHTML='<div style="padding:14px;text-align:center;font-size:12px;opacity:.5">Could not load registrations.</div>';});
+}
+
+function startPrizeCountdown(){
+  function tick(){
+    var el=document.getElementById('prize-countdown');if(!el)return;
+    var now=new Date(),midnight=new Date();
+    midnight.setHours(24,0,0,0);
+    var diff=Math.floor((midnight-now)/1000);
+    var h=Math.floor(diff/3600),m=Math.floor((diff%3600)/60),s=diff%60;
+    el.textContent=(h<10?'0':'')+h+':'+(m<10?'0':'')+m+':'+(s<10?'0':'')+s;
+  }
+  tick();setInterval(tick,1000);
+}
+
+// track online wins — only ever called by the host, for either player, with daily reset built in
+function recordOnlineWinFor(winnerUid,winnerName){
+  if(!fbDb||!winnerUid)return;
+  var today=getTodayKey();
+  fbDb.collection('presence').doc(winnerUid).get().then(function(doc){
+    var data=doc.exists?doc.data():{};
+    var sameDay=data.dailyWinsDate===today;
+    var newDailyWins=sameDay?((data.dailyWins||0)+1):1;
+    fbDb.collection('presence').doc(winnerUid).set({
+      name:winnerName||data.name||'Player',
+      onlineWins:newDailyWins,      // this field now means "today's wins" only
+      dailyWins:newDailyWins,
+      dailyWinsDate:today
+    },{merge:true}).catch(function(){});
+  }).catch(function(){});
+  // write a log entry so you can manually audit wins before paying prizes
+  fbDb.collection('win_logs').add({
+    winnerUid:winnerUid,winnerName:winnerName||'Player',
+    date:today,ts:Date.now(),roomCode:OL.code,
+    hostUid:U.uid,hostName:getDisplayName()
+  }).catch(function(){});
+} 
+// ── KEYBOARD ──
+document.addEventListener('keydown',function(e){if(e.key==='r'||e.key==='R')newGame();if(e.key==='u'||e.key==='U')undoMove();});
+
+// ── SERVICE WORKER ──
+if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}
+
+// ── START ──
+if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',boot);}else{boot();}
+</script>
+</body>
+</html>

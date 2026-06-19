@@ -1,0 +1,893 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Checkers King — Admin</title>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;600;700&family=Audiowide&display=swap');
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Rajdhani',sans-serif;background:#0d0d0d;color:#f0d9b5;min-height:100vh;padding:16px}
+h1{font-family:'Orbitron',sans-serif;color:#ffd700;font-size:22px;letter-spacing:4px;text-align:center;margin-bottom:4px}
+.sub{text-align:center;font-size:12px;opacity:.4;margin-bottom:20px}
+.tabs{display:flex;gap:8px;justify-content:center;margin-bottom:20px;flex-wrap:wrap}
+.tab{background:#1a1a1a;border:2px solid #333;color:#aaa;padding:8px 18px;font-family:'Orbitron',sans-serif;font-size:11px;cursor:pointer;border-radius:4px;letter-spacing:2px}
+.tab.active{border-color:#ffd700;color:#ffd700;background:#1f1a00}
+.section{display:none}
+.section.active{display:block}
+.card{background:#1a1a1a;border:2px solid #333;border-radius:10px;padding:16px;margin-bottom:14px}
+.card h2{font-family:'Orbitron',sans-serif;font-size:13px;color:#ffd700;margin-bottom:12px;letter-spacing:2px}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{background:#111;color:#ffd700;font-family:'Orbitron',sans-serif;font-size:10px;padding:8px 10px;text-align:left;letter-spacing:1px;border-bottom:2px solid #333}
+td{padding:8px 10px;border-bottom:1px solid #222;vertical-align:middle}
+tr:hover td{background:rgba(255,215,0,.04)}
+.rank-1{color:#ffd700;font-weight:700}
+.rank-2{color:#c0c0c0;font-weight:700}
+.rank-3{color:#cd7f32;font-weight:700}
+.prize-amt{color:#ffd700;font-weight:700}
+.phone{font-family:'Audiowide',sans-serif;font-size:12px;color:#00ff88;letter-spacing:1px}
+.no-phone{color:#ff6b6b;font-size:11px;opacity:.7}
+.paid-btn{background:#ffd700;color:#111;border:none;padding:5px 12px;font-size:11px;font-family:'Orbitron',sans-serif;cursor:pointer;border-radius:4px;font-weight:700;white-space:nowrap}
+.paid-btn:hover{background:#ffea00}
+.paid-badge{background:rgba(0,255,136,.15);color:#00ff88;border:1px solid #00ff88;padding:4px 10px;font-size:10px;border-radius:4px;font-family:'Orbitron',sans-serif}
+.unpaid-badge{background:rgba(255,100,100,.1);color:#ff6b6b;border:1px solid #ff6b6b;padding:4px 10px;font-size:10px;border-radius:4px;font-family:'Orbitron',sans-serif}
+.inp{width:100%;padding:9px 12px;background:#111;border:2px solid #333;border-radius:6px;color:#f0d9b5;font-family:'Rajdhani',sans-serif;font-size:14px;outline:none;margin-bottom:8px}
+.inp:focus{border-color:#ffd700}
+.btn{background:#ffd700;color:#111;border:none;padding:10px 18px;font-family:'Orbitron',sans-serif;font-size:11px;font-weight:700;cursor:pointer;border-radius:4px;letter-spacing:2px;margin-top:4px}
+.btn:hover{background:#ffea00}
+.btn-ghost{background:transparent;color:#ffd700;border:2px solid #ffd700;padding:8px 16px;font-family:'Orbitron',sans-serif;font-size:11px;cursor:pointer;border-radius:4px;letter-spacing:2px}
+.btn-danger{background:#c0392b;color:#fff;border:none;padding:8px 14px;font-family:'Orbitron',sans-serif;font-size:10px;cursor:pointer;border-radius:4px;letter-spacing:1px}
+.stat-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin-bottom:16px}
+.stat{background:#111;border:1px solid #333;border-radius:8px;padding:12px;text-align:center}
+.stat-num{font-family:'Audiowide',sans-serif;font-size:22px;color:#ffd700}
+.stat-lbl{font-size:11px;opacity:.5;margin-top:2px}
+.code-list{display:flex;flex-direction:column;gap:6px;max-height:300px;overflow-y:auto}
+.code-item{display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:#111;border:1px solid #222;border-radius:6px;font-size:13px;gap:8px}
+.code-val{font-family:'Audiowide',sans-serif;font-size:16px;color:#ffd700;letter-spacing:4px}
+.used-tag{color:#ff6b6b;font-size:10px;font-family:'Orbitron',sans-serif}
+.avail-tag{color:#00ff88;font-size:10px;font-family:'Orbitron',sans-serif}
+.err{color:#ff6b6b;font-size:12px;min-height:16px;margin-bottom:4px}
+.ok{color:#00ff88;font-size:12px;min-height:16px;margin-bottom:4px}
+.login-box{max-width:340px;margin:60px auto;background:#1a1a1a;border:2px solid #ffd700;border-radius:12px;padding:28px 24px;text-align:center;display:flex;flex-direction:column;gap:12px}
+.login-box h2{font-family:'Orbitron',sans-serif;color:#ffd700;font-size:16px;letter-spacing:3px}
+.refresh-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.refresh-row span{font-size:11px;opacity:.4}
+.summary-box{background:#111;border:1px solid #ffd700;border-radius:8px;padding:12px;margin-bottom:12px;font-size:13px;line-height:2}
+.copy-btn{background:#333;color:#ffd700;border:none;padding:3px 8px;font-size:10px;cursor:pointer;border-radius:3px;margin-left:6px;font-family:'Rajdhani',sans-serif}
+.copy-btn:hover{background:#555}
+#login-section{display:flex;flex-direction:column;align-items:center}
+#main-section{display:none}
+</style>
+</head>
+<body>
+
+<div id="login-section">
+  <div class="login-box">
+    <h2>👑 ADMIN LOGIN</h2>
+    <p style="font-size:12px;opacity:.5">Checkers King Dashboard</p>
+    <input class="inp" type="password" id="admin-pass" placeholder="Enter admin PIN"/>
+    <div class="err" id="login-err"></div>
+    <button class="btn" onclick="adminLogin()">LOGIN</button>
+  </div>
+</div>
+
+<div id="main-section">
+  <h1>👑 CHECKERS KING</h1>
+  <div class="sub">ADMIN DASHBOARD — <span id="today-label"></span></div>
+
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('prizes')">💰 TODAY'S PRIZES</button>
+    <button class="tab" onclick="switchTab('codes')">🔑 REG CODES</button>
+    <button class="tab" onclick="switchTab('tourney')">🤖 TOURNAMENT</button>
+    <button class="tab" onclick="switchTab('players')">👥 ALL PLAYERS</button>
+    <button class="tab" onclick="switchTab('logs')">🕵️ WIN LOGS</button>
+  </div>
+
+  <!-- PRIZES TAB -->
+  <div class="section active" id="tab-prizes">
+    <div class="stat-row" id="prize-stats"></div>
+
+    <div class="card">
+      <div class="refresh-row">
+        <h2>🏆 PRIZE LEADERBOARD</h2>
+        <button class="btn-ghost" onclick="loadPrizeBoard()" style="padding:5px 12px;font-size:10px">🔄 REFRESH</button>
+      </div>
+      <div id="prize-summary" class="summary-box" style="display:none"></div>
+      <div style="overflow-x:auto">
+        <table id="prize-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>PLAYER</th>
+              <th>PHONE</th>
+              <th>WINS</th>
+              <th>PRIZE (UGX)</th>
+              <th>STATUS</th>
+              <th>ACTION</th>
+            </tr>
+          </thead>
+          <tbody id="prize-tbody">
+            <tr><td colspan="7" style="text-align:center;opacity:.4;padding:20px">Loading...</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn" onclick="exportCSV()">📥 EXPORT CSV</button>
+        <button class="btn-ghost" onclick="markAllPaid()">✅ MARK ALL PAID</button>
+        <button class="btn-ghost" onclick="copyPaymentList()">📋 COPY PAYMENT LIST</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- CODES TAB -->
+  <div class="section" id="tab-codes">
+    <div class="card">
+      <h2>🔑 GENERATE REGISTRATION CODES</h2>
+      <p style="font-size:12px;opacity:.6;margin-bottom:12px">Each code allows one player to register for today. Share codes on Telegram after payment is confirmed.</p>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        <input class="inp" type="number" id="code-count" value="5" min="1" max="50" style="width:80px;margin:0"/>
+        <span style="font-size:13px;opacity:.6">codes for today</span>
+        <button class="btn" onclick="generateCodes()">⚡ GENERATE</button>
+      </div>
+      <div class="ok" id="gen-ok"></div>
+      <div class="err" id="gen-err"></div>
+    </div>
+
+    <div class="card">
+      <div class="refresh-row">
+        <h2>📋 TODAY'S CODES</h2>
+        <button class="btn-ghost" onclick="loadCodes()" style="padding:5px 12px;font-size:10px">🔄 REFRESH</button>
+      </div>
+      <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap">
+        <button class="btn-ghost" onclick="copyAllAvailCodes()" style="padding:6px 12px;font-size:10px">📋 COPY AVAILABLE CODES</button>
+      </div>
+      <div class="code-list" id="code-list">
+        <div style="opacity:.4;font-size:12px;text-align:center;padding:12px">Loading...</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- WIN LOGS TAB -->
+  <div class="section" id="tab-logs">
+    <div class="card">
+      <div class="refresh-row">
+        <h2>🕵️ TODAY'S WIN LOGS — AUDIT BEFORE PAYING</h2>
+        <button class="btn-ghost" onclick="loadWinLogs()" style="padding:5px 12px;font-size:10px">🔄 REFRESH</button>
+      </div>
+      <p style="font-size:11px;opacity:.5;margin-bottom:10px">Each row is one recorded win. Check timestamps for suspicious patterns — e.g. many wins in a few minutes, or the same host/winner pair repeating unusually fast.</p>
+      <div id="logs-summary" class="summary-box" style="display:none"></div>
+      <div style="overflow-x:auto">
+        <table>
+          <thead>
+            <tr>
+              <th>TIME</th><th>WINNER</th><th>HOST (who recorded it)</th><th>ROOM CODE</th><th>FLAG</th>
+            </tr>
+          </thead>
+          <tbody id="logs-tbody">
+            <tr><td colspan="5" style="text-align:center;opacity:.4;padding:20px">Loading...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+<!-- TOURNAMENT TAB -->
+  <div class="section" id="tab-tourney">
+    <div class="card">
+      <h2>🤖 GENERATE TOURNAMENT CODES</h2>
+      <p style="font-size:12px;opacity:.6;margin-bottom:6px">Codes are valid only for the <strong style="color:#ffd700">current 2-hour window</strong>. Window: <span id="tourney-current-window" style="color:#ffd700"></span></p>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        <input class="inp" type="number" id="tourney-code-count" value="5" min="1" max="50" style="width:80px;margin:0"/>
+        <span style="font-size:13px;opacity:.6">codes for this window</span>
+        <button class="btn" onclick="generateTourneyCodes()">⚡ GENERATE</button>
+      </div>
+      <div class="ok" id="tourney-gen-ok"></div>
+      <div class="err" id="tourney-gen-err"></div>
+    </div>
+
+    <div class="card">
+      <div class="refresh-row">
+        <h2>📋 THIS WINDOW'S CODES</h2>
+        <button class="btn-ghost" onclick="loadTourneyCodes()" style="padding:5px 12px;font-size:10px">🔄 REFRESH</button>
+      </div>
+      <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap">
+        <button class="btn-ghost" onclick="copyAllAvailTourneyCodes()" style="padding:6px 12px;font-size:10px">📋 COPY AVAILABLE CODES</button>
+      </div>
+      <div class="code-list" id="tourney-code-list">
+        <div style="opacity:.4;font-size:12px;text-align:center;padding:12px">Loading...</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="refresh-row">
+        <h2>🏆 LIVE TOURNAMENT STANDINGS — THIS WINDOW</h2>
+        <button class="btn-ghost" onclick="loadTourneyStandings()" style="padding:5px 12px;font-size:10px">🔄 REFRESH</button>
+      </div>
+      <div id="tourney-stand-summary" class="summary-box" style="display:none"></div>
+      <div style="overflow-x:auto">
+        <table>
+          <thead>
+            <tr><th>#</th><th>PLAYER</th><th>PHONE</th><th>PTS</th><th>PLAYED</th><th>RECORD</th><th>PRIZE</th><th>ACTION</th></tr>
+          </thead>
+          <tbody id="tourney-stand-tbody">
+            <tr><td colspan="8" style="text-align:center;opacity:.4;padding:20px">Loading...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- PLAYERS TAB -->
+  <div class="section" id="tab-players">
+  <!-- PLAYERS TAB -->
+  <div class="section" id="tab-players">
+    <div class="card">
+      <div class="refresh-row">
+        <h2>👥 REGISTERED TODAY</h2>
+        <button class="btn-ghost" onclick="loadAllPlayers()" style="padding:5px 12px;font-size:10px">🔄 REFRESH</button>
+      </div>
+      <div style="overflow-x:auto">
+        <table>
+          <thead>
+            <tr>
+              <th>#</th><th>NAME</th><th>PHONE</th><th>ONLINE WINS</th><th>REGISTERED AT</th>
+            </tr>
+          </thead>
+          <tbody id="players-tbody">
+            <tr><td colspan="5" style="text-align:center;opacity:.4;padding:20px">Loading...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+var FIREBASE_CONFIG={apiKey:"AIzaSyBAyQBcJ_1J57z6n8JwFj0QYG6seOcWk28",authDomain:"checkers-king-d247e.firebaseapp.com",projectId:"checkers-king-d247e",storageBucket:"checkers-king-d247e.firebasestorage.app",messagingSenderId:"121278520070",appId:"1:121278520070:web:dd7d6e937760bebb46dc87"};
+
+var fbAuth,fbDb;
+var todayKey='';
+var prizeData=[];
+
+// init
+firebase.initializeApp(FIREBASE_CONFIG);
+fbAuth=firebase.auth();
+fbDb=firebase.firestore();
+
+var d=new Date();
+todayKey=d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate();
+document.getElementById('today-label').textContent=d.toDateString().toUpperCase();
+
+var ADMIN_PIN='8371'; // ← change this to your own PIN
+
+function adminLogin(){
+  var pass=document.getElementById('admin-pass').value;
+  var err=document.getElementById('login-err');
+  err.textContent='';
+  if(!pass){err.textContent='Enter PIN.';return;}
+  if(pass!==ADMIN_PIN){err.textContent='Wrong PIN.';return;}
+  document.getElementById('login-section').style.display='none';
+  document.getElementById('main-section').style.display='block';
+  loadPrizeBoard();
+  loadCodes();
+  loadAllPlayers();
+  loadWinLogs();
+  loadTourneyCodes();
+  loadTourneyStandings();
+}
+
+function switchTab(name){
+  document.querySelectorAll('.tab').forEach(function(t,i){
+    var names=['prizes','codes','tourney','players','logs'];
+    t.className='tab'+(names[i]===name?' active':'');
+  });
+  document.querySelectorAll('.section').forEach(function(s){s.className='section';});
+  document.getElementById('tab-'+name).className='section active';
+  if(name==='logs')loadWinLogs();
+  if(name==='tourney'){loadTourneyCodes();loadTourneyStandings();}
+}
+
+// ── PRIZE BOARD ──
+function loadPrizeBoard(){
+  var tbody=document.getElementById('prize-tbody');
+  tbody.innerHTML='<tr><td colspan="7" style="text-align:center;opacity:.4;padding:20px">Loading...</td></tr>';
+  prizeData=[];
+
+  fbDb.collection('registrations').where('date','==',todayKey).get().then(function(regSnap){
+    var regMap={};
+    regSnap.forEach(function(doc){var d=doc.data();regMap[d.uid]={phone:d.phone||'',name:d.name||'Player',regTs:d.ts||0};});
+
+    fbDb.collection('presence').get().then(function(snap){
+      var players=[];
+      snap.forEach(function(doc){
+        var d=doc.data();
+        if(regMap[d.uid]){
+          players.push({
+            uid:d.uid,
+            name:d.name||regMap[d.uid].name||'Player',
+            phone:regMap[d.uid].phone||'',
+           wins:(d.dailyWinsDate===todayKey?d.dailyWins:0)||0,
+            avatar:d.avatar||'👑',
+            paid:d.paidToday===todayKey
+          });
+        }
+      });
+
+      players.sort(function(a,b){return b.wins-a.wins;});
+      prizeData=players.slice(0,20);
+
+      // stats
+      var totalReg=Object.keys(regMap).length;
+      var totalPaid=prizeData.filter(function(p){return p.paid;}).length;
+      var totalPrize=0;
+      prizeData.forEach(function(p,i){
+        var rank=i+1;
+        if(rank<=3)totalPrize+=10000;
+        else if(rank<=10)totalPrize+=7000;
+        else if(rank<=15)totalPrize+=5000;
+      });
+
+      document.getElementById('prize-stats').innerHTML=
+        '<div class="stat"><div class="stat-num">'+totalReg+'</div><div class="stat-lbl">Registered</div></div>'+
+        '<div class="stat"><div class="stat-num">'+prizeData.length+'</div><div class="stat-lbl">Prize eligible</div></div>'+
+        '<div class="stat"><div class="stat-num">'+totalPaid+'</div><div class="stat-lbl">Paid out</div></div>'+
+        '<div class="stat"><div class="stat-num" style="font-size:14px">'+totalPrize.toLocaleString()+'</div><div class="stat-lbl">UGX owed</div></div>';
+
+      if(!prizeData.length){
+        tbody.innerHTML='<tr><td colspan="7" style="text-align:center;opacity:.4;padding:20px">No registered players yet today.</td></tr>';
+        return;
+      }
+
+      var html='';
+      prizeData.forEach(function(p,i){
+        var rank=i+1;
+        var prize=rank<=3?10000:rank<=10?7000:rank<=15?5000:0;
+        var rankClass=rank===1?'rank-1':rank===2?'rank-2':rank===3?'rank-3':'';
+        var rankStr=rank<=3?['🥇','🥈','🥉'][rank-1]:rank;
+        html+='<tr>';
+        html+='<td class="'+rankClass+'">'+rankStr+'</td>';
+        html+='<td>'+escHtml(p.avatar)+' '+escHtml(p.name)+'</td>';
+        html+='<td>'+(p.phone?'<span class="phone">'+escHtml(p.phone)+'</span><button class="copy-btn" onclick="copyText(\''+escHtml(p.phone)+'\')">copy</button>':'<span class="no-phone">not provided</span>')+'</td>';
+        html+='<td style="text-align:center;font-weight:700">'+p.wins+'</td>';
+        html+='<td class="prize-amt">'+(prize?prize.toLocaleString()+' UGX':'—')+'</td>';
+        html+='<td>'+(p.paid?'<span class="paid-badge">✅ PAID</span>':'<span class="unpaid-badge">⏳ PENDING</span>')+'</td>';
+        html+='<td>'+(prize&&!p.paid?'<button class="paid-btn" onclick="markPaid(\''+p.uid+'\','+i+')">MARK PAID</button>':'')+'</td>';
+        html+='</tr>';
+      });
+      tbody.innerHTML=html;
+    });
+  }).catch(function(e){
+    tbody.innerHTML='<tr><td colspan="7" style="color:#ff6b6b;padding:12px">Error: '+e.message+'</td></tr>';
+  });
+}
+
+function markPaid(uid,idx){
+  if(!confirm('Mark this player as paid?'))return;
+  fbDb.collection('presence').doc(uid).update({paidToday:todayKey}).then(function(){
+    prizeData[idx].paid=true;
+    loadPrizeBoard();
+  }).catch(function(e){alert('Error: '+e.message);});
+}
+
+function markAllPaid(){
+  if(!confirm('Mark ALL prize winners as paid?'))return;
+  var batch=fbDb.batch();
+  prizeData.forEach(function(p,i){
+    if(i<15&&!p.paid){
+      batch.update(fbDb.collection('presence').doc(p.uid),{paidToday:todayKey});
+    }
+  });
+  batch.commit().then(function(){loadPrizeBoard();}).catch(function(e){alert('Error: '+e.message);});
+}
+
+function copyPaymentList(){
+  var lines=['CHECKERS KING PRIZE PAYMENTS — '+new Date().toDateString(),''];
+  prizeData.forEach(function(p,i){
+    var rank=i+1;
+    var prize=rank<=3?10000:rank<=10?7000:rank<=15?5000:0;
+    if(!prize)return;
+    lines.push((rank)+'. '+p.name+' | '+p.phone+' | '+prize.toLocaleString()+' UGX | '+(p.paid?'PAID':'PENDING'));
+  });
+  copyText(lines.join('\n'));
+  alert('Payment list copied to clipboard!');
+}
+
+function exportCSV(){
+  var rows=[['Rank','Name','Phone','Wins','Prize UGX','Status']];
+  prizeData.forEach(function(p,i){
+    var rank=i+1;
+    var prize=rank<=3?10000:rank<=10?7000:rank<=15?5000:0;
+    rows.push([rank,p.name,p.phone,p.wins,prize,p.paid?'PAID':'PENDING']);
+  });
+  var csv=rows.map(function(r){return r.map(function(c){return'"'+String(c).replace(/"/g,'""')+'"';}).join(',');}).join('\n');
+  var a=document.createElement('a');
+  a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv);
+  a.download='checkers-king-prizes-'+todayKey+'.csv';
+  a.click();
+}
+
+// ── CODES ──
+function generateCodes(){
+  var count=parseInt(document.getElementById('code-count').value)||5;
+  var ok=document.getElementById('gen-ok');
+  var err=document.getElementById('gen-err');
+  ok.textContent='';err.textContent='';
+  var batch=fbDb.batch();
+  var codes=[];
+  for(var i=0;i<count;i++){
+    var chars='ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // removed confusing chars: 0,O,1,I
+    var code='';
+    for(var c=0;c<6;c++)code+=chars[Math.floor(Math.random()*chars.length)];
+    codes.push(code);
+    batch.set(fbDb.collection('reg_codes').doc(code),{
+      code:code,date:todayKey,used:false,createdAt:Date.now()
+    });
+  }
+  batch.commit().then(function(){
+    ok.textContent='✅ Generated '+count+' codes!';
+    loadCodes();
+  }).catch(function(e){err.textContent='Error: '+e.message;});
+}
+
+function loadCodes(){
+  var list=document.getElementById('code-list');
+  list.innerHTML='<div style="opacity:.4;font-size:12px;text-align:center;padding:12px">Loading...</div>';
+  fbDb.collection('reg_codes').where('date','==',todayKey).get()
+    .then(function(snap){
+      if(snap.empty){list.innerHTML='<div style="opacity:.4;font-size:12px;text-align:center;padding:12px">No codes generated yet today.</div>';return;}
+      var html='';
+      snap.forEach(function(doc){
+        var d=doc.data();
+        html+='<div class="code-item">';
+        html+='<span class="code-val">'+d.code+'</span>';
+        if(d.used){
+          html+='<span class="used-tag">USED by '+escHtml(d.usedName||'?')+'</span>';
+        }else{
+          html+='<span class="avail-tag">AVAILABLE</span>';
+          html+='<button class="copy-btn" style="padding:5px 10px;font-size:11px" onclick="copyText(\''+d.code+'\')">📋 copy</button>';
+          html+='<button class="btn-danger" onclick="deleteCode(\''+d.code+'\')">🗑</button>';
+        }
+        html+='</div>';
+      });
+      list.innerHTML=html;
+    }).catch(function(e){list.innerHTML='<div style="color:#ff6b6b;font-size:12px;padding:10px">Error: '+e.message+'</div>';});
+}
+
+function deleteCode(code){
+  if(!confirm('Delete code '+code+'?'))return;
+  fbDb.collection('reg_codes').doc(code).delete().then(function(){loadCodes();});
+}
+
+function copyAllAvailCodes(){
+  fbDb.collection('reg_codes').where('date','==',todayKey).where('used','==',false).get()
+    .then(function(snap){
+      var codes=[];
+      snap.forEach(function(doc){codes.push(doc.data().code);});
+      if(!codes.length){alert('No available codes.');return;}
+      copyText(codes.join('\n'));
+      alert('Copied '+codes.length+' available codes!');
+    });
+}
+
+// ── ALL PLAYERS ──
+function loadAllPlayers(){
+  var tbody=document.getElementById('players-tbody');
+  tbody.innerHTML='<tr><td colspan="5" style="text-align:center;opacity:.4;padding:20px">Loading...</td></tr>';
+  fbDb.collection('registrations').where('date','==',todayKey).get().then(function(regSnap){
+    var regs=[];
+    regSnap.forEach(function(doc){regs.push(doc.data());});
+    if(!regs.length){tbody.innerHTML='<tr><td colspan="5" style="text-align:center;opacity:.4;padding:16px">No registrations today yet.</td></tr>';return;}
+    // get wins for each
+    var uids=regs.map(function(r){return r.uid;});
+    fbDb.collection('presence').get().then(function(snap){
+      var winsMap={};
+      snap.forEach(function(doc){
+        var d=doc.data();
+        winsMap[d.uid]=(d.dailyWinsDate===todayKey?(d.dailyWins||0):0);
+      });
+      regs.sort(function(a,b){return (winsMap[b.uid]||0)-(winsMap[a.uid]||0);});
+      var html='';
+      regs.forEach(function(r,i){
+        var t=r.ts?new Date(r.ts).toLocaleTimeString():'-';
+        html+='<tr><td>'+(i+1)+'</td><td>'+escHtml(r.name||'?')+'</td><td>'+(r.phone?'<span class="phone">'+escHtml(r.phone)+'</span>':'<span class="no-phone">—</span>')+'</td><td style="text-align:center">'+( winsMap[r.uid]||0)+'</td><td style="font-size:11px;opacity:.6">'+t+'</td></tr>';
+      });
+      tbody.innerHTML=html;
+    });
+  }).catch(function(e){tbody.innerHTML='<tr><td colspan="5" style="color:#ff6b6b;padding:12px">'+e.message+'</td></tr>';});
+}
+
+function loadAbandonedRooms(){
+  fbDb.collection('rooms').where('status','==','joined').get().then(function(snap){
+    var abandoned=[];
+    var cutoff=Date.now()-30*60*1000; // older than 30 min and never resolved
+    snap.forEach(function(doc){
+      var d=doc.data();
+      if(!d.resolved&&d.ts<cutoff)abandoned.push({code:doc.id,host:d.host,guest:d.guest,ts:d.ts});
+    });
+    var summary=document.getElementById('logs-summary');
+    if(abandoned.length){
+      var extra='<br><br><strong style="color:#ff6b6b">⚠️ '+abandoned.length+' abandoned/unfinished game(s)</strong> — no winner was recorded for these:<br>'+
+        abandoned.map(function(a){return a.code+' — '+a.host+' vs '+(a.guest||'?')+' ('+new Date(a.ts).toLocaleTimeString()+')';}).join('<br>');
+      if(summary){summary.style.display='block';summary.innerHTML=(summary.innerHTML||'')+extra;}
+    }
+  }).catch(function(){});
+}
+
+function loadWinLogs(){
+  var tbody=document.getElementById('logs-tbody');
+  var summary=document.getElementById('logs-summary');
+  tbody.innerHTML='<tr><td colspan="5" style="text-align:center;opacity:.4;padding:20px">Loading...</td></tr>';
+  fbDb.collection('win_logs').where('date','==',todayKey).orderBy('ts','desc').limit(200).get()
+    .then(function(snap){
+      if(snap.empty){
+        tbody.innerHTML='<tr><td colspan="5" style="text-align:center;opacity:.4;padding:20px">No wins recorded yet today.</td></tr>';
+        summary.style.display='none';
+        return;
+      }
+      var logs=[];
+      snap.forEach(function(doc){logs.push(doc.data());});
+
+      // basic abuse heuristic: same winner with 3+ wins within any 5-minute window
+      var byWinner={};
+      logs.forEach(function(l){
+        if(!byWinner[l.winnerUid])byWinner[l.winnerUid]=[];
+        byWinner[l.winnerUid].push(l.ts);
+      });
+      var flaggedUids={};
+      Object.keys(byWinner).forEach(function(uid){
+        var times=byWinner[uid].slice().sort(function(a,b){return a-b;});
+        for(var i=0;i<times.length;i++){
+          var windowCount=1;
+          for(var j=i+1;j<times.length;j++){
+            if(times[j]-times[i]<=5*60*1000)windowCount++;
+            else break;
+          }
+          if(windowCount>=3){flaggedUids[uid]=true;break;}
+        }
+      });
+
+      var totalWins=logs.length;
+      var flaggedCount=Object.keys(flaggedUids).length;
+      summary.style.display='block';
+      summary.innerHTML='Total wins logged today: <strong style="color:#ffd700">'+totalWins+'</strong><br>'+
+        'Players flagged for fast repeat wins (3+ wins inside 5 min): <strong style="color:'+(flaggedCount?'#ff6b6b':'#00ff88')+'">'+flaggedCount+'</strong>'+
+        (flaggedCount?'<br><span style="font-size:11px;opacity:.6">Review flagged rows below before paying these players.</span>':'');
+
+      var html='';
+      logs.forEach(function(l){
+        var time=new Date(l.ts).toLocaleTimeString();
+        var isFlagged=flaggedUids[l.winnerUid];
+        html+='<tr style="'+(isFlagged?'background:rgba(255,100,100,.08)':'')+'">';
+        html+='<td style="font-size:11px;opacity:.7">'+time+'</td>';
+        html+='<td>'+escHtml(l.winnerName||'?')+'</td>';
+        html+='<td>'+escHtml(l.hostName||'?')+'</td>';
+        html+='<td style="font-family:Audiowide,sans-serif;font-size:11px">'+escHtml(l.roomCode||'-')+'</td>';
+        html+='<td>'+(isFlagged?'<span class="unpaid-badge">⚠️ CHECK</span>':'<span class="paid-badge">OK</span>')+'</td>';
+        html+='</tr>';
+      });
+      tbody.innerHTML=html;
+    
+}).catch(function(e){
+      tbody.innerHTML='<tr><td colspan="5" style="color:#ff6b6b;padding:12px">Error: '+e.message+'</td></tr>';
+    });
+  loadAbandonedRooms();
+}
+// ── TOURNAMENT WINDOW HELPERS (must match the game file's logic exactly) ──
+function getTourneyWindowKeyAdmin(){
+  var now=new Date();
+  var h=now.getHours();
+  var windowStart=10+Math.floor((h-10)/2)*2;
+  if(h<10)windowStart=10; // before opening, default to the 10am window for code prep
+  var d=now.getFullYear()+'-'+(now.getMonth()+1)+'-'+now.getDate();
+  return d+'_'+windowStart;
+}
+function getTourneyWindowLabelAdmin(){
+  var now=new Date();
+  var h=now.getHours();
+  var windowStart=10+Math.floor((h-10)/2)*2;
+  if(h<10)windowStart=10;
+  var windowEnd=windowStart+2;
+  function fmt(hr){var ap=hr>=12?'PM':'AM';var dh=hr>12?hr-12:hr;if(dh===0)dh=12;return dh+':00 '+ap;}
+  return fmt(windowStart)+' – '+fmt(windowEnd);
+}
+
+function generateTourneyCodes(){
+  var count=parseInt(document.getElementById('tourney-code-count').value)||5;
+  var ok=document.getElementById('tourney-gen-ok');
+  var err=document.getElementById('tourney-gen-err');
+  ok.textContent='';err.textContent='';
+  var windowKey=getTourneyWindowKeyAdmin();
+  var batch=fbDb.batch();
+  for(var i=0;i<count;i++){
+    var chars='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    var code='';
+    for(var c=0;c<6;c++)code+=chars[Math.floor(Math.random()*chars.length)];
+    batch.set(fbDb.collection('tourney_codes').doc(code),{
+      code:code,windowKey:windowKey,used:false,createdAt:Date.now()
+    });
+  }
+  batch.commit().then(function(){
+    ok.textContent='✅ Generated '+count+' tournament codes for '+getTourneyWindowLabelAdmin()+'!';
+    loadTourneyCodes();
+  }).catch(function(e){err.textContent='Error: '+e.message;});
+}
+
+function loadTourneyCodes(){
+  var list=document.getElementById('tourney-code-list');
+  var winLabel=document.getElementById('tourney-current-window');
+  if(winLabel)winLabel.textContent=getTourneyWindowLabelAdmin();
+  list.innerHTML='<div style="opacity:.4;font-size:12px;text-align:center;padding:12px">Loading...</div>';
+  var windowKey=getTourneyWindowKeyAdmin();
+  fbDb.collection('tourney_codes').where('windowKey','==',windowKey).get()
+    .then(function(snap){
+      if(snap.empty){list.innerHTML='<div style="opacity:.4;font-size:12px;text-align:center;padding:12px">No codes generated yet for this window.</div>';return;}
+      var html='';
+      snap.forEach(function(doc){
+        var d=doc.data();
+        html+='<div class="code-item">';
+        html+='<span class="code-val">'+d.code+'</span>';
+        if(d.used){
+          html+='<span class="used-tag">USED by '+escHtml(d.usedName||'?')+'</span>';
+        }else{
+          html+='<span class="avail-tag">AVAILABLE</span>';
+          html+='<button class="copy-btn" style="padding:5px 10px;font-size:11px" onclick="copyText(\''+d.code+'\')">📋 copy</button>';
+          html+='<button class="btn-danger" onclick="deleteTourneyCode(\''+d.code+'\')">🗑</button>';
+        }
+        html+='</div>';
+      });
+      list.innerHTML=html;
+    }).catch(function(e){list.innerHTML='<div style="color:#ff6b6b;font-size:12px;padding:10px">Error: '+e.message+'</div>';});
+}
+
+function deleteTourneyCode(code){
+  if(!confirm('Delete code '+code+'?'))return;
+  fbDb.collection('tourney_codes').doc(code).delete().then(function(){loadTourneyCodes();});
+}
+
+function copyAllAvailTourneyCodes(){
+  var windowKey=getTourneyWindowKeyAdmin();
+  fbDb.collection('tourney_codes').where('windowKey','==',windowKey).where('used','==',false).get()
+    .then(function(snap){
+      var codes=[];
+      snap.forEach(function(doc){codes.push(doc.data().code);});
+      if(!codes.length){alert('No available codes.');return;}
+      copyText(codes.join('\n'));
+      alert('Copied '+codes.length+' available tournament codes!');
+    });
+}
+
+var TOURNEY_PRIZES_ADMIN=[8000,7000,5000]; // must match the game file's TOURNEY_PRIZES exactly
+
+function computeTourneyPrizesAdmin(players){
+  var prizeByUid={};
+  var idx=0;
+  for(var tier=0;tier<TOURNEY_PRIZES_ADMIN.length&&idx<players.length;tier++){
+    var tierScore=players[idx].points||0;
+    var tierMembers=[];
+    while(idx<players.length&&(players[idx].points||0)===tierScore){
+      tierMembers.push(players[idx]);
+      idx++;
+    }
+    if(tierScore<=0)break;
+    var share=Math.round(TOURNEY_PRIZES_ADMIN[tier]/tierMembers.length);
+    for(var m=0;m<tierMembers.length;m++){
+      prizeByUid[tierMembers[m].uid]=share;
+    }
+  }
+  return prizeByUid;
+}
+
+var tourneyStandData=[];
+function loadTourneyStandings(){
+  var tbody=document.getElementById('tourney-stand-tbody');
+  var summary=document.getElementById('tourney-stand-summary');
+  tbody.innerHTML='<tr><td colspan="7" style="text-align:center;opacity:.4;padding:20px">Loading...</td></tr>';
+  var windowKey=getTourneyWindowKeyAdmin();
+  fbDb.collection('tourney_entries').where('windowKey','==',windowKey).get().then(function(snap){
+    var players=[];
+    snap.forEach(function(doc){players.push(doc.data());});
+    if(!players.length){
+      tbody.innerHTML='<tr><td colspan="8" style="text-align:center;opacity:.4;padding:20px">No entries yet this window.</td></tr>';
+      summary.style.display='none';
+      return;
+    }
+    players.sort(function(a,b){return(b.points||0)-(a.points||0);});
+    tourneyStandData=players;
+    var prizeByUid=computeTourneyPrizesAdmin(players);
+    var totalOwed=0;
+    Object.keys(prizeByUid).forEach(function(uid){totalOwed+=prizeByUid[uid];});
+    summary.style.display='block';
+    summary.innerHTML='Prize pool this window: 1st 8,000 · 2nd 7,000 · 3rd 5,000 UGX (split if tied)<br>Total currently owed: <strong style="color:#ffd700">'+totalOwed.toLocaleString()+' UGX</strong>';
+    var html='';
+    players.forEach(function(p,i){
+      var rank=i+1;
+      var prize=prizeByUid[p.uid];
+      var rankClass=rank===1?'rank-1':rank===2?'rank-2':rank===3?'rank-3':'';
+      html+='<tr>';
+      html+='<td class="'+rankClass+'">'+rank+'</td>';
+      html+='<td>'+escHtml(p.avatar||'👑')+' '+escHtml(p.name)+'</td>';
+      html+='<td>'+(p.phone?'<span class="phone">'+escHtml(p.phone)+'</span><button class="copy-btn" onclick="copyText(\''+escHtml(p.phone)+'\')">copy</button>':'<span class="no-phone">not provided</span>')+'</td>';
+      html+='<td style="text-align:center;font-weight:700">'+(p.points||0)+'</td>';
+      html+='<td style="text-align:center">'+(p.gamesPlayed||0)+'/3</td>';
+      html+='<td style="text-align:center;font-size:11px">'+(p.wins||0)+'W-'+(p.draws||0)+'D-'+(p.losses||0)+'L</td>';
+      html+='<td class="prize-amt">'+(prize?prize.toLocaleString()+' UGX':'—')+'</td>';
+      html+='<td>'+(prize&&!p.paidOut?'<button class="paid-btn" onclick="markTourneyPaid(\''+windowKey+'_'+p.uid+'\','+i+')">MARK PAID</button>':(p.paidOut?'<span class="paid-badge">✅ PAID</span>':''))+'</td>';
+      html+='</tr>';
+    });
+    tbody.innerHTML=html;
+  }).catch(function(e){tbody.innerHTML='<tr><td colspan="8" style="color:#ff6b6b;padding:12px">Error: '+e.message+'</td></tr>';});
+}
+
+function markTourneyPaid(docId,idx){
+  if(!confirm('Mark this tournament player as paid?'))return;
+  fbDb.collection('tourney_entries').doc(docId).update({paidOut:true}).then(function(){
+    loadTourneyStandings();
+  }).catch(function(e){alert('Error: '+e.message);});
+}
+// ── TOURNAMENT WINDOW HELPERS (must match the game file's logic exactly) ──
+function getTourneyWindowKeyAdmin(){
+  var now=new Date();
+  var h=now.getHours();
+  var windowStart=10+Math.floor((h-10)/2)*2;
+  if(h<10)windowStart=10; // before opening, default to the 10am window for code prep
+  var d=now.getFullYear()+'-'+(now.getMonth()+1)+'-'+now.getDate();
+  return d+'_'+windowStart;
+}
+function getTourneyWindowLabelAdmin(){
+  var now=new Date();
+  var h=now.getHours();
+  var windowStart=10+Math.floor((h-10)/2)*2;
+  if(h<10)windowStart=10;
+  var windowEnd=windowStart+2;
+  function fmt(hr){var ap=hr>=12?'PM':'AM';var dh=hr>12?hr-12:hr;if(dh===0)dh=12;return dh+':00 '+ap;}
+  return fmt(windowStart)+' – '+fmt(windowEnd);
+}
+
+function generateTourneyCodes(){
+  var count=parseInt(document.getElementById('tourney-code-count').value)||5;
+  var ok=document.getElementById('tourney-gen-ok');
+  var err=document.getElementById('tourney-gen-err');
+  ok.textContent='';err.textContent='';
+  var windowKey=getTourneyWindowKeyAdmin();
+  var batch=fbDb.batch();
+  for(var i=0;i<count;i++){
+    var chars='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    var code='';
+    for(var c=0;c<6;c++)code+=chars[Math.floor(Math.random()*chars.length)];
+    batch.set(fbDb.collection('tourney_codes').doc(code),{
+      code:code,windowKey:windowKey,used:false,createdAt:Date.now()
+    });
+  }
+  batch.commit().then(function(){
+    ok.textContent='✅ Generated '+count+' tournament codes for '+getTourneyWindowLabelAdmin()+'!';
+    loadTourneyCodes();
+  }).catch(function(e){err.textContent='Error: '+e.message;});
+}
+
+function loadTourneyCodes(){
+  var list=document.getElementById('tourney-code-list');
+  var winLabel=document.getElementById('tourney-current-window');
+  if(winLabel)winLabel.textContent=getTourneyWindowLabelAdmin();
+  list.innerHTML='<div style="opacity:.4;font-size:12px;text-align:center;padding:12px">Loading...</div>';
+  var windowKey=getTourneyWindowKeyAdmin();
+  fbDb.collection('tourney_codes').where('windowKey','==',windowKey).get()
+    .then(function(snap){
+      if(snap.empty){list.innerHTML='<div style="opacity:.4;font-size:12px;text-align:center;padding:12px">No codes generated yet for this window.</div>';return;}
+      var html='';
+      snap.forEach(function(doc){
+        var d=doc.data();
+        html+='<div class="code-item">';
+        html+='<span class="code-val">'+d.code+'</span>';
+        if(d.used){
+          html+='<span class="used-tag">USED by '+escHtml(d.usedName||'?')+'</span>';
+        }else{
+          html+='<span class="avail-tag">AVAILABLE</span>';
+          html+='<button class="copy-btn" style="padding:5px 10px;font-size:11px" onclick="copyText(\''+d.code+'\')">📋 copy</button>';
+          html+='<button class="btn-danger" onclick="deleteTourneyCode(\''+d.code+'\')">🗑</button>';
+        }
+        html+='</div>';
+      });
+      list.innerHTML=html;
+    }).catch(function(e){list.innerHTML='<div style="color:#ff6b6b;font-size:12px;padding:10px">Error: '+e.message+'</div>';});
+}
+
+function deleteTourneyCode(code){
+  if(!confirm('Delete code '+code+'?'))return;
+  fbDb.collection('tourney_codes').doc(code).delete().then(function(){loadTourneyCodes();});
+}
+
+function copyAllAvailTourneyCodes(){
+  var windowKey=getTourneyWindowKeyAdmin();
+  fbDb.collection('tourney_codes').where('windowKey','==',windowKey).where('used','==',false).get()
+    .then(function(snap){
+      var codes=[];
+      snap.forEach(function(doc){codes.push(doc.data().code);});
+      if(!codes.length){alert('No available codes.');return;}
+      copyText(codes.join('\n'));
+      alert('Copied '+codes.length+' available tournament codes!');
+    });
+}
+
+var TOURNEY_PRIZES_ADMIN=[8000,7000,5000]; // must match the game file's TOURNEY_PRIZES exactly
+
+function computeTourneyPrizesAdmin(players){
+  var prizeByUid={};
+  var idx=0;
+  for(var tier=0;tier<TOURNEY_PRIZES_ADMIN.length&&idx<players.length;tier++){
+    var tierScore=players[idx].points||0;
+    var tierMembers=[];
+    while(idx<players.length&&(players[idx].points||0)===tierScore){
+      tierMembers.push(players[idx]);
+      idx++;
+    }
+    if(tierScore<=0)break;
+    var share=Math.round(TOURNEY_PRIZES_ADMIN[tier]/tierMembers.length);
+    for(var m=0;m<tierMembers.length;m++){
+      prizeByUid[tierMembers[m].uid]=share;
+    }
+  }
+  return prizeByUid;
+}
+
+var tourneyStandData=[];
+function loadTourneyStandings(){
+  var tbody=document.getElementById('tourney-stand-tbody');
+  var summary=document.getElementById('tourney-stand-summary');
+  tbody.innerHTML='<tr><td colspan="7" style="text-align:center;opacity:.4;padding:20px">Loading...</td></tr>';
+  var windowKey=getTourneyWindowKeyAdmin();
+  fbDb.collection('tourney_entries').where('windowKey','==',windowKey).get().then(function(snap){
+    var players=[];
+    snap.forEach(function(doc){players.push(doc.data());});
+    if(!players.length){
+      tbody.innerHTML='<tr><td colspan="8" style="text-align:center;opacity:.4;padding:20px">No entries yet this window.</td></tr>';
+      summary.style.display='none';
+      return;
+    }
+    players.sort(function(a,b){return(b.points||0)-(a.points||0);});
+    tourneyStandData=players;
+    var prizeByUid=computeTourneyPrizesAdmin(players);
+    var totalOwed=0;
+    Object.keys(prizeByUid).forEach(function(uid){totalOwed+=prizeByUid[uid];});
+    summary.style.display='block';
+    summary.innerHTML='Prize pool this window: 1st 8,000 · 2nd 7,000 · 3rd 5,000 UGX (split if tied)<br>Total currently owed: <strong style="color:#ffd700">'+totalOwed.toLocaleString()+' UGX</strong>';
+    var html='';
+    players.forEach(function(p,i){
+      var rank=i+1;
+      var prize=prizeByUid[p.uid];
+      var rankClass=rank===1?'rank-1':rank===2?'rank-2':rank===3?'rank-3':'';
+      html+='<tr>';
+      html+='<td class="'+rankClass+'">'+rank+'</td>';
+      html+='<td>'+escHtml(p.avatar||'👑')+' '+escHtml(p.name)+'</td>';
+      html+='<td>'+(p.phone?'<span class="phone">'+escHtml(p.phone)+'</span><button class="copy-btn" onclick="copyText(\''+escHtml(p.phone)+'\')">copy</button>':'<span class="no-phone">not provided</span>')+'</td>';
+      html+='<td style="text-align:center;font-weight:700">'+(p.points||0)+'</td>';
+      html+='<td style="text-align:center">'+(p.gamesPlayed||0)+'/3</td>';
+      html+='<td style="text-align:center;font-size:11px">'+(p.wins||0)+'W-'+(p.draws||0)+'D-'+(p.losses||0)+'L</td>';
+      html+='<td class="prize-amt">'+(prize?prize.toLocaleString()+' UGX':'—')+'</td>';
+      html+='<td>'+(prize&&!p.paidOut?'<button class="paid-btn" onclick="markTourneyPaid(\''+windowKey+'_'+p.uid+'\','+i+')">MARK PAID</button>':(p.paidOut?'<span class="paid-badge">✅ PAID</span>':''))+'</td>';
+      html+='</tr>';
+    });
+    tbody.innerHTML=html;
+  }).catch(function(e){tbody.innerHTML='<tr><td colspan="8" style="color:#ff6b6b;padding:12px">Error: '+e.message+'</td></tr>';});
+}
+
+function markTourneyPaid(docId,idx){
+  if(!confirm('Mark this tournament player as paid?'))return;
+  fbDb.collection('tourney_entries').doc(docId).update({paidOut:true}).then(function(){
+    loadTourneyStandings();
+  }).catch(function(e){alert('Error: '+e.message);});
+}
+
+
+function copyText(t){
+  if(navigator.clipboard){navigator.clipboard.writeText(t).catch(function(){fallbackCopy(t);});}
+  else fallbackCopy(t);
+}
+function fallbackCopy(t){
+  var el=document.createElement('textarea');el.value=t;document.body.appendChild(el);el.select();document.execCommand('copy');document.body.removeChild(el);
+}
+function escHtml(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+</script>
+</body>
+</html>

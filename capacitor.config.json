@@ -1,0 +1,9 @@
+{
+  "appId": "com.checkersking.app",
+  "appName": "Checkers King",
+  "webDir": "www",
+  "server": {
+    "url": "https://checkersking.store",
+    "androidScheme": "https"
+  }
+}
